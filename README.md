@@ -10,3 +10,4 @@ Potential problems:
 Ideas:
     Sexual selection
         Place sexual metrics under natural selection as well
+
