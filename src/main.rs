@@ -5,6 +5,8 @@ mod sim;
 mod e0;
 mod e1;
 mod e2;
+mod e3;
+mod e4;
 
 pub use evol_prim::*;
 pub use evol_prim::Base::*;
@@ -23,12 +25,12 @@ fn main() {
     let rng = rand::thread_rng();
   
     let mut sim = Simulation {
-        R: &e2::reproduce,
-        D: &e2::death,
+        R: &e4::reproduce,
+        D: &e4::death,
         sequences: population,
         max_sequences: 400,
         t: 0,
-        max_t: 100,
+        max_t: 300,
         rng
     };
 
@@ -38,8 +40,11 @@ fn main() {
             println!("Population size: {}", sim.sequences.len());
             if sim.sequences.len() > 0 {
                 let fit = (&sim.sequences).into_iter()
-                        .fold(0, |b, s| if s.starts_with(e2::E2_BETTER_REPRODUCE_PREFIX) { b + 1 } else { b });
-                println!("Population fitness = {}", fit as f32 / sim.sequences.len() as f32);
+                        .fold(0, |b, s| b + e4::count_AT_repetitions(s));
+                println!("Population reproductive fitness = {}", fit as f32 / sim.sequences.len() as f32);
+                let fit2 = (&sim.sequences).into_iter()
+                        .fold(0, |b, s| b + e4::count_C(s));
+                println!("Population mutation protection fitness = {}", fit2 as f32 / sim.sequences.len() as f32);
             }
         }
         sim.run_step();
