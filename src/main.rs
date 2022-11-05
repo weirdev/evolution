@@ -5,6 +5,7 @@ mod e1;
 mod e2;
 mod e3;
 mod e4;
+mod e5;
 mod evol_prim;
 mod sim;
 
@@ -20,11 +21,11 @@ fn main() {
     for _ in 0..100 {
         population.push(Organism {
             genes: bs.clone(),
-            body: (),
+            body: e5::Body5 { age: 0 },
         });
         population.push(Organism {
             genes: bs2.clone(),
-            body: (),
+            body: e5::Body5 { age: 0 },
         });
     }
 
@@ -32,8 +33,9 @@ fn main() {
 
     let mut sim = Simulation {
         R: &e4::reproduce,
-        D: &(|o, r| e4::death(&o.genes, r)),
-        B: &(|_, _| ()),
+        D: &e5::death,
+        B: &(|_, _| e5::Body5 { age: 0 }),
+        U: &e5::update,
         organisms: population,
         max_sequences: 400,
         t: 0,

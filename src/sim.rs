@@ -9,6 +9,8 @@ pub struct Simulation<'a, O> {
     pub D: &'a dyn Fn(&Organism<O>, &mut ThreadRng) -> bool,
     // Build body from genetic seq
     pub B: &'a dyn Fn(&BaseSeq, &mut ThreadRng) -> O,
+    // Update organism with a single time step
+    pub U: &'a dyn Fn(&mut Organism<O>, &mut ThreadRng),
     // All organisms in simulation
     pub organisms: Vec<Organism<O>>,
     pub max_sequences: usize,
@@ -30,7 +32,10 @@ impl<'a, O: std::fmt::Debug + Clone> Simulation<'a, O> {
 
     pub fn run_step(&mut self) {
         let mut new_organisms = Vec::new();
-        self.organisms.iter_mut().for_each(|org| {
+        while let Some(mut org) = self.organisms.pop() {
+            // Update the state of this organism
+            (self.U)(&mut org, &mut self.rng);
+            // Reproduce
             let babies: Vec<Organism<O>> = (self.R)(&org.genes, &mut self.rng)
                 .into_iter()
                 .filter(|s| s.len() > 0)
@@ -45,10 +50,11 @@ impl<'a, O: std::fmt::Debug + Clone> Simulation<'a, O> {
             if babies.len() > 0 {
                 new_organisms.extend(babies.into_iter());
             }
+            // Die
             if !(self.D)(&org, &mut self.rng) {
-                new_organisms.push(org.clone());
+                new_organisms.push(org);
             }
-        });
+        }
 
         self.organisms.clear();
         if new_organisms.len() > self.max_sequences {
