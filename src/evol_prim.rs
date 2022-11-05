@@ -1,20 +1,17 @@
-use rand::{Rng, prelude::ThreadRng};
 use rand::distributions::{Distribution, Standard};
+use rand::{prelude::ThreadRng, Rng};
 
 // Evolution Primitives
 pub type BaseSeq = Vec<Base>;
 
 use Base::*;
 
-#[derive(Debug)]
-#[derive(Copy)]
-#[derive(Clone)]
-#[derive(PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum Base {
     A,
     C,
     T,
-    G
+    G,
 }
 
 impl Distribution<Base> for Standard {
@@ -23,31 +20,43 @@ impl Distribution<Base> for Standard {
             0 => A,
             1 => C,
             2 => T,
-            _ => G
+            _ => G,
         }
     }
 }
 
-pub fn clone_with_mutation(seq: &BaseSeq, rng: &mut ThreadRng, 
-    insertion_prob: f32, deletion_prob: f32, base_change_prob: f32) -> BaseSeq {
-        let mut new = BaseSeq::new();
-        for b in seq {
-            if rng.gen::<f32>() < insertion_prob {
-                new.push(rng.gen());
-            }
-            
-            if rng.gen::<f32>() > deletion_prob { // Else skip
-                let next = if rng.gen::<f32>() < base_change_prob {
-                    rng.gen()
-                } else {
-                    *b
-                };
-                new.push(next);
-            }
-        }
+pub fn clone_with_mutation(
+    seq: &BaseSeq,
+    rng: &mut ThreadRng,
+    insertion_prob: f32,
+    deletion_prob: f32,
+    base_change_prob: f32,
+) -> BaseSeq {
+    let mut new = BaseSeq::new();
+    for b in seq {
         if rng.gen::<f32>() < insertion_prob {
             new.push(rng.gen());
         }
 
-        new
+        if rng.gen::<f32>() > deletion_prob {
+            // Else skip
+            let next = if rng.gen::<f32>() < base_change_prob {
+                rng.gen()
+            } else {
+                *b
+            };
+            new.push(next);
+        }
+    }
+    if rng.gen::<f32>() < insertion_prob {
+        new.push(rng.gen());
+    }
+
+    new
+}
+
+#[derive(Debug, Clone)]
+pub struct Organism<O> {
+    pub genes: BaseSeq,
+    pub body: O,
 }
