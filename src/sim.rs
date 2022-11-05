@@ -29,11 +29,8 @@ impl<'a, O: std::fmt::Debug + Clone> Simulation<'a, O> {
     }
 
     pub fn run_step(&mut self) {
-        let mut i: isize = 0;
-        let len = self.organisms.len();
         let mut new_organisms = Vec::new();
-        while (i as usize) < len {
-            let org = &self.organisms[i as usize];
+        self.organisms.iter_mut().for_each(|org| {
             let babies: Vec<Organism<O>> = (self.R)(&org.genes, &mut self.rng)
                 .into_iter()
                 .filter(|s| s.len() > 0)
@@ -47,12 +44,11 @@ impl<'a, O: std::fmt::Debug + Clone> Simulation<'a, O> {
                 .collect();
             if babies.len() > 0 {
                 new_organisms.extend(babies.into_iter());
-            } else if !(self.D)(&org.genes, &mut self.rng) {
+            }
+            if !(self.D)(&org.genes, &mut self.rng) {
                 new_organisms.push(org.clone());
             }
-
-            i += 1;
-        }
+        });
 
         self.organisms.clear();
         if new_organisms.len() > self.max_sequences {
