@@ -6,7 +6,7 @@ pub struct Simulation<'a, O> {
     // Reproduce
     pub R: &'a dyn Fn(&BaseSeq, &mut ThreadRng) -> Vec<BaseSeq>,
     // Die
-    pub D: &'a dyn Fn(&BaseSeq, &mut ThreadRng) -> bool,
+    pub D: &'a dyn Fn(&Organism<O>, &mut ThreadRng) -> bool,
     // Build body from genetic seq
     pub B: &'a dyn Fn(&BaseSeq, &mut ThreadRng) -> O,
     // All organisms in simulation
@@ -45,7 +45,7 @@ impl<'a, O: std::fmt::Debug + Clone> Simulation<'a, O> {
             if babies.len() > 0 {
                 new_organisms.extend(babies.into_iter());
             }
-            if !(self.D)(&org.genes, &mut self.rng) {
+            if !(self.D)(&org, &mut self.rng) {
                 new_organisms.push(org.clone());
             }
         });

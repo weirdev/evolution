@@ -32,7 +32,7 @@ fn main() {
 
     let mut sim = Simulation {
         R: &e4::reproduce,
-        D: &e4::death,
+        D: &(|o, r| e4::death(&o.genes, r)),
         B: &(|_, _| ()),
         organisms: population,
         max_sequences: 400,
