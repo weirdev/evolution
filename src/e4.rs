@@ -1,11 +1,11 @@
 // E4: The more prefix repetitions of AT, the faster reproduction; C's confer mutation protection
 
-use rand::Rng;
 use rand::prelude::ThreadRng;
+use rand::Rng;
 
-use crate::evol_prim::*;
-use crate::evol_prim::BaseSeq;
 use crate::evol_prim::Base::*;
+use crate::evol_prim::BaseSeq;
+use crate::evol_prim::*;
 
 pub fn reproduce(s: &BaseSeq, rng: &mut ThreadRng) -> Vec<BaseSeq> {
     let at_reps = count_AT_repetitions(s);
@@ -13,12 +13,10 @@ pub fn reproduce(s: &BaseSeq, rng: &mut ThreadRng) -> Vec<BaseSeq> {
         0 | 1 => Vec::new(),
         _ => {
             let c_count = count_C(s);
-            let c = if c_count == 0 {
-                1.0
-            } else {
-                c_count as f32
-            };
-            (0..at_reps).map(|_| clone_with_mutation(s, rng, 0.01 / c, 0.01 / c, 0.05 / c)).collect()
+            let c = if c_count == 0 { 1.0 } else { c_count as f32 };
+            (0..at_reps)
+                .map(|_| clone_with_mutation(s, rng, 0.01 / c, 0.01 / c, 0.05 / c))
+                .collect()
         }
     }
 }
