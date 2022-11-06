@@ -6,36 +6,30 @@ mod e2;
 mod e3;
 mod e4;
 mod e5;
+mod e6;
 mod evol_prim;
 mod sim;
 
 pub use evol_prim::Base::*;
 pub use evol_prim::*;
+use rand::Rng;
 use sim::Simulation;
 
 fn main() {
-    let bs = vec![A, T, A, T, T];
-    let bs2 = vec![A, C, G, T, T];
+    let mut rng = rand::thread_rng();
 
     let mut population = Vec::new();
     for _ in 0..100 {
-        population.push(Organism {
-            genes: bs.clone(),
-            body: e5::Body5 { age: 0 },
-        });
-        population.push(Organism {
-            genes: bs2.clone(),
-            body: e5::Body5 { age: 0 },
-        });
+        let seq = (0..4).map(|_| rng.gen::<Base>()).collect();
+        let body = e6::build(&seq, &mut rng);
+        population.push(Organism { genes: seq, body });
     }
 
-    let rng = rand::thread_rng();
-
     let mut sim = Simulation {
-        R: &e4::reproduce,
-        D: &e5::death,
-        B: &(|_, _| e5::Body5 { age: 0 }),
-        U: &e5::update,
+        R: &e6::reproduce,
+        D: &e6::death,
+        B: &e6::build,
+        U: &(|_, _| {}),
         organisms: population,
         max_sequences: 400,
         t: 0,
@@ -48,20 +42,9 @@ fn main() {
             //println!("{:?}", sim.E);
             println!("Population size: {}", sim.organisms.len());
             if sim.organisms.len() > 0 {
-                let fit = (&sim.organisms)
-                    .into_iter()
-                    .fold(0, |b, o| b + e4::count_AT_repetitions(&o.genes));
-                println!(
-                    "Population reproductive fitness = {}",
-                    fit as f32 / sim.organisms.len() as f32
-                );
-                let fit2 = (&sim.organisms)
-                    .into_iter()
-                    .fold(0, |b, o| b + e4::count_C(&o.genes));
-                println!(
-                    "Population mutation protection fitness = {}",
-                    fit2 as f32 / sim.organisms.len() as f32
-                );
+                let fitLow = sim.organisms.iter().filter(|o| o.body.weight < 0.1).count();
+                let fitHigh = sim.organisms.iter().filter(|o| o.body.weight > 0.9).count();
+                println!("{} Low; {} High", fitLow, fitHigh);
             }
         }
         sim.run_step();

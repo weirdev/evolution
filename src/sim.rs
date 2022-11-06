@@ -36,7 +36,7 @@ impl<'a, O: std::fmt::Debug + Clone> Simulation<'a, O> {
             // Update the state of this organism
             (self.U)(&mut org, &mut self.rng);
 
-            // Die
+            // Die?
             if !(self.D)(&org, &mut self.rng) {
                 // Reproduce
                 let babies = (self.R)(&org.genes, &mut self.rng)

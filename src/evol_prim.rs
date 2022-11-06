@@ -1,7 +1,8 @@
+// Evolution Primitives
+
 use rand::distributions::{Distribution, Standard};
 use rand::{prelude::ThreadRng, Rng};
 
-// Evolution Primitives
 pub type BaseSeq = Vec<Base>;
 
 use Base::*;

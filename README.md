@@ -7,8 +7,6 @@ Potential problems:
     Image classification
 
 Next steps:
-    Build a tunable decision function from each orgs gene sequece
-        Decision quality under selection
     Second function from gene sequence
         This tunes the first function during org's life
         Represents learning
