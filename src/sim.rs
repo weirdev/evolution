@@ -2,17 +2,18 @@ use rand::prelude::{SliceRandom, ThreadRng};
 
 use crate::evol_prim::*;
 
-pub struct Simulation<'a, O> {
+pub struct Simulation<'a, O, E> {
     // Reproduce
     pub R: &'a dyn Fn(&BaseSeq, &mut ThreadRng) -> Vec<BaseSeq>,
     // Die
-    pub D: &'a dyn Fn(&Organism<O>, &mut ThreadRng) -> bool,
+    pub D: &'a dyn Fn(&Organism<O>, &E, &mut ThreadRng) -> bool,
     // Build body from genetic seq
     pub B: &'a dyn Fn(&BaseSeq, &mut ThreadRng) -> O,
     // Update organism with a single time step
     pub U: &'a dyn Fn(&mut Organism<O>, &mut ThreadRng),
     // All organisms in simulation
     pub organisms: Vec<Organism<O>>,
+    pub environment: E,
     pub max_sequences: usize,
     // Current time step
     pub t: i32,
@@ -20,7 +21,7 @@ pub struct Simulation<'a, O> {
     pub rng: ThreadRng,
 }
 
-impl<'a, O: std::fmt::Debug + Clone> Simulation<'a, O> {
+impl<'a, O: std::fmt::Debug + Clone, E> Simulation<'a, O, E> {
     pub fn run(&mut self, print_freq: Option<u32>) {
         while self.t < self.max_t {
             self.run_step();
@@ -37,7 +38,7 @@ impl<'a, O: std::fmt::Debug + Clone> Simulation<'a, O> {
             (self.U)(&mut org, &mut self.rng);
 
             // Die?
-            if !(self.D)(&org, &mut self.rng) {
+            if !(self.D)(&org, &self.environment, &mut self.rng) {
                 // Reproduce
                 let babies = (self.R)(&org.genes, &mut self.rng)
                     .into_iter()
