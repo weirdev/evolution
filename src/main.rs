@@ -30,7 +30,7 @@ fn main() {
         R: &e7::reproduce,
         D: &e7::death,
         B: &e7::build,
-        U: &(|_, _| {}),
+        U: &e7::update,
         organisms: population,
         environment: e7::Environment7 {
             safeZoneLow: -0.2,
@@ -46,17 +46,26 @@ fn main() {
         if sim.t % 1 == 0 {
             //println!("{:?}", sim.E);
             println!("Population size: {}", sim.organisms.len());
-            if sim.organisms.len() > 0 {
-                let fit = sim
-                    .organisms
-                    .iter()
-                    .filter(|o| {
-                        o.body.position >= sim.environment.safeZoneLow
-                            && o.body.position <= sim.environment.safeZoneHigh
-                    })
-                    .count();
-                println!("{} in safe zone", fit);
-            }
+            let fit = sim
+                .organisms
+                .iter()
+                .filter(|o| {
+                    o.body.position >= sim.environment.safeZoneLow
+                        && o.body.position <= sim.environment.safeZoneHigh
+                })
+                .count();
+
+            let avg_pos = sim.organisms.iter().map(|o| o.body.position).sum::<f32>()
+                / sim.organisms.len() as f32;
+
+            let avg_learning = sim
+                .organisms
+                .iter()
+                .map(|o| o.body.learnedResponse)
+                .sum::<f32>()
+                / sim.organisms.len() as f32;
+
+            println!("{} avg pos; {} avg learning, {} in safe zone", avg_pos, avg_learning, fit);
         }
         sim.run_step();
     }

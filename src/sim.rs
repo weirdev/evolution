@@ -10,7 +10,7 @@ pub struct Simulation<'a, O, E> {
     // Build body from genetic seq
     pub B: &'a dyn Fn(&BaseSeq, &mut ThreadRng) -> O,
     // Update organism with a single time step
-    pub U: &'a dyn Fn(&mut Organism<O>, &mut ThreadRng),
+    pub U: &'a dyn Fn(&mut Organism<O>, &E, &mut ThreadRng),
     // All organisms in simulation
     pub organisms: Vec<Organism<O>>,
     pub environment: E,
@@ -35,7 +35,7 @@ impl<'a, O: std::fmt::Debug + Clone, E> Simulation<'a, O, E> {
         let mut new_organisms = Vec::new();
         while let Some(mut org) = self.organisms.pop() {
             // Update the state of this organism
-            (self.U)(&mut org, &mut self.rng);
+            (self.U)(&mut org, &self.environment, &mut self.rng);
 
             // Die?
             if !(self.D)(&org, &self.environment, &mut self.rng) {
