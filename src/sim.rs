@@ -21,7 +21,7 @@ pub struct Simulation<'a, O, E> {
     pub rng: ThreadRng,
 }
 
-impl<'a, O: std::fmt::Debug + Clone, E> Simulation<'a, O, E> {
+impl<'a, O: std::fmt::Debug + Clone, E: Environment> Simulation<'a, O, E> {
     pub fn run(&mut self, print_freq: Option<u32>) {
         while self.t < self.max_t {
             self.run_step();
@@ -65,6 +65,7 @@ impl<'a, O: std::fmt::Debug + Clone, E> Simulation<'a, O, E> {
         } else {
             self.organisms.append(&mut new_organisms);
         }
+        self.environment.update();
 
         self.t += 1;
     }

@@ -5,41 +5,49 @@ use crate::evol_prim::*;
 
 #[derive(Debug, Clone)]
 pub struct Body7 {
-    pub position: f32,        // [-1,1]
-    pub learnedResponse: f32, // [-1,1]
+    pub position: f32,         // [-1,1]
+    pub learned_response: f32, // [-1,1]
 }
 
 pub struct Environment7 {
-    pub safeZoneLow: f32,  // [-1,1]
-    pub safeZoneHigh: f32, // [-1, 1] > safeZoneLow
+    pub safe_zone_low: f32,  // [-1,1]
+    pub safe_zone_high: f32, // [-1, 1] > safeZoneLow
+}
+
+impl Environment for Environment7 {
+    fn update(&mut self) {
+        let move_on_tick = 0.3;
+        self.safe_zone_low = wrapping_feature_add(self.safe_zone_low, move_on_tick);
+        self.safe_zone_high = wrapping_feature_add(self.safe_zone_high, move_on_tick);
+    }
 }
 
 fn inDangerZone(org: &Organism<Body7>, env: &Environment7) -> bool {
-    org.body.position < env.safeZoneLow || org.body.position > env.safeZoneHigh
+    org.body.position < env.safe_zone_low || org.body.position > env.safe_zone_high
 }
 
 pub fn death(org: &Organism<Body7>, env: &Environment7, rng: &mut ThreadRng) -> bool {
-    inDangerZone(org, env) ^ (rng.gen::<f32>() < 0.2)
+    (inDangerZone(org, env) && rng.gen::<f32>() < 0.6) ^ (rng.gen::<f32>() < 0.001)
 }
 
 pub fn reproduce(s: &BaseSeq, rng: &mut ThreadRng) -> Vec<BaseSeq> {
     // One child
-    (0..1)
-        .map(|_| clone_with_mutation(s, rng, 0.01, 0.01, 0.05))
+    (0..2)
+        .map(|_| clone_with_mutation(s, rng, 0.01, 0.01, 0.04))
         .collect()
 }
 
 pub fn update(org: &mut Organism<Body7>, env: &Environment7, rng: &mut ThreadRng) {
     // Move in response to being in danger zone.
-    // No perception of current position for now
-    if inDangerZone(org, env) {
-        // Update position with learned response
-        let mut new_pos = org.body.position + (org.body.learnedResponse * rng.gen::<f32>());
-        // Mario style wraparound
-        new_pos = ((new_pos + 3.0) % 2.0) - 1.0;
-
-        org.body.position = new_pos;
-    }
+    // Granted perfect perception of danger
+    // No relative perception of current position for now
+    let pos_change = if inDangerZone(org, env) {
+        rng.gen() // Do something random (no learning feedback if in DZ)
+    } else {
+        org.body.learned_response // If safe, do learned behavior
+    };
+    // Mario style wraparound
+    org.body.position = wrapping_feature_add(org.body.position, pos_change);
 }
 
 /**
@@ -62,6 +70,6 @@ pub fn build(seq: &BaseSeq, rng: &mut ThreadRng) -> Body7 {
     // Cast into [-1, 1]
     Body7 {
         position: byteToFeatureSpace(pos_raw),
-        learnedResponse: byteToFeatureSpace(learn_raw),
+        learned_response: byteToFeatureSpace(learn_raw),
     }
 }

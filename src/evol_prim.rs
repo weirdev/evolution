@@ -74,3 +74,12 @@ pub fn read4BasesToUnsignedByte(bases: &mut dyn Iterator<Item = &Base>) -> u8 {
 pub fn byteToFeatureSpace(byte: u8) -> f32 {
     (byte.wrapping_add(128) as i32 - 128) as f32 / 128.0
 }
+
+// feat1, feat2, res in [-1,1]; feat1 + feat2 = res
+pub fn wrapping_feature_add(feat1: f32, feat2: f32) -> f32 {
+    ((feat1 + feat2 + 3.0) % 2.0) - 1.0
+}
+
+pub trait Environment {
+    fn update(&mut self);
+}

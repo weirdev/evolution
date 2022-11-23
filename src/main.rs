@@ -17,12 +17,19 @@ use rand::Rng;
 use sim::Simulation;
 
 fn main() {
+    // let s = vec![T, T, C, T];
+    let s = vec![A, T, C, T];
+    let b = read4BasesToUnsignedByte(&mut s.iter());
+    let f = byteToFeatureSpace(b);
+    println!("b: {}, f: {}", b, f);
+
     let mut rng = rand::thread_rng();
 
     let mut population = Vec::new();
     for _ in 0..100 {
-        let seq = (0..4).map(|_| rng.gen::<Base>()).collect();
-        let body = e7::build(&seq, &mut rng);
+        let mut seq = (0..4).map(|_| rng.gen::<Base>()).collect::<Vec<Base>>(); // T T C T
+        seq.append(&mut vec![A, T, C, T]);
+        let body = e7::build(&seq, &mut rng); // 166 = 0.3
         population.push(Organism { genes: seq, body });
     }
 
@@ -33,8 +40,8 @@ fn main() {
         U: &e7::update,
         organisms: population,
         environment: e7::Environment7 {
-            safeZoneLow: -0.2,
-            safeZoneHigh: 0.0,
+            safe_zone_low: -0.1,
+            safe_zone_high: 0.0,
         },
         max_sequences: 400,
         t: 0,
@@ -50,8 +57,8 @@ fn main() {
                 .organisms
                 .iter()
                 .filter(|o| {
-                    o.body.position >= sim.environment.safeZoneLow
-                        && o.body.position <= sim.environment.safeZoneHigh
+                    o.body.position >= sim.environment.safe_zone_low
+                        && o.body.position <= sim.environment.safe_zone_high
                 })
                 .count();
 
@@ -61,11 +68,20 @@ fn main() {
             let avg_learning = sim
                 .organisms
                 .iter()
-                .map(|o| o.body.learnedResponse)
+                .map(|o| o.body.learned_response)
                 .sum::<f32>()
+                // .filter(|r| (r - 0.3).abs() < 0.1)
+                // .count() as f32
                 / sim.organisms.len() as f32;
 
-            println!("{} avg pos; {} avg learning, {} in safe zone", avg_pos, avg_learning, fit);
+            println!(
+                "avg pos {}, avg learning {}, in safe zone {}, SZ {}:{}",
+                avg_pos,
+                avg_learning,
+                fit,
+                sim.environment.safe_zone_low,
+                sim.environment.safe_zone_high
+            );
         }
         sim.run_step();
     }
