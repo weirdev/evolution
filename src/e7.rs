@@ -7,7 +7,7 @@ use crate::evol_prim::*;
 pub struct Body7 {
     pub position: f32,         // [-1,1]
     pub learned_response: f32, // [-1,1]
-    pub track: bool
+    pub track: bool,
 }
 
 pub struct Environment7 {
@@ -26,7 +26,8 @@ impl Environment for Environment7 {
 pub fn inDangerZone(org: &Organism<Body7>, env: &Environment7) -> bool {
     let mut zone_high = env.safe_zone_high;
     let mut pos = org.body.position;
-    if env.safe_zone_low > zone_high { // wrapped?
+    if env.safe_zone_low > zone_high {
+        // wrapped?
         if pos < zone_high {
             pos += 2.0;
         }
@@ -37,14 +38,18 @@ pub fn inDangerZone(org: &Organism<Body7>, env: &Environment7) -> bool {
 }
 
 pub fn death(org: &Organism<Body7>, env: &Environment7, rng: &mut ThreadRng) -> bool {
-    (inDangerZone(org, env) && rng.gen::<f32>() < 0.99) ^ (rng.gen::<f32>() < 0.001)
+    (inDangerZone(org, env) && rng.gen::<f32>() < 0.5) ^ (rng.gen::<f32>() < 0.001)
 }
 
-pub fn reproduce(s: &BaseSeq, rng: &mut ThreadRng) -> Vec<BaseSeq> {
-    // Two children
-    (0..1)
-        .map(|_| clone_with_mutation(s, rng, 0.0, 0.0, 0.06))
-        .collect()
+pub fn reproduce(org: &Organism<Body7>, env: &Environment7, rng: &mut ThreadRng) -> Vec<BaseSeq> {
+    if !inDangerZone(org, env) {
+        // One child
+        (0..2)
+            .map(|_| clone_with_mutation(&org.genes, rng, 0.0, 0.0, 0.06))
+            .collect()
+    } else {
+        Vec::new()
+    }
 }
 
 pub fn update(org: &mut Organism<Body7>, env: &Environment7, rng: &mut ThreadRng) {
@@ -56,7 +61,6 @@ pub fn update(org: &mut Organism<Body7>, env: &Environment7, rng: &mut ThreadRng
     // } else {
     //     org.body.learned_response // If safe, do learned behavior
     // };
-
 
     // Mario style wraparound
     org.body.position = wrapping_feature_add(org.body.position, org.body.learned_response);
@@ -83,6 +87,6 @@ pub fn build(seq: &BaseSeq, rng: &mut ThreadRng) -> Body7 {
     Body7 {
         position: byteToFeatureSpace(pos_raw),
         learned_response: byteToFeatureSpace(learn_raw),
-        track: false
+        track: false,
     }
 }

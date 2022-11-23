@@ -4,7 +4,7 @@ use crate::evol_prim::*;
 
 pub struct Simulation<'a, O, E> {
     // Reproduce
-    pub R: &'a dyn Fn(&BaseSeq, &mut ThreadRng) -> Vec<BaseSeq>,
+    pub R: &'a dyn Fn(&Organism<O>, &E, &mut ThreadRng) -> Vec<BaseSeq>,
     // Die
     pub D: &'a dyn Fn(&Organism<O>, &E, &mut ThreadRng) -> bool,
     // Build body from genetic seq
@@ -37,7 +37,7 @@ impl<'a, O: std::fmt::Debug + Clone, E: Environment> Simulation<'a, O, E> {
             // Die?
             if !(self.D)(&org, &self.environment, &mut self.rng) {
                 // Reproduce
-                let babies = (self.R)(&org.genes, &mut self.rng)
+                let babies = (self.R)(&org, &self.environment, &mut self.rng)
                     .into_iter()
                     .filter(|s| s.len() > 0)
                     .map(|s| {
@@ -65,7 +65,7 @@ impl<'a, O: std::fmt::Debug + Clone, E: Environment> Simulation<'a, O, E> {
         }
 
         // Update env and orgs for next cycle
-        
+
         // Env must tick before org updates, otherwise organisms always appear out phase with env after each step
         self.environment.update();
 

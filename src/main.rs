@@ -28,7 +28,7 @@ fn main() {
     let mut population = Vec::new();
     for _ in 0..100 {
         let mut seq = (0..4).map(|_| rng.gen::<Base>()).collect::<Vec<Base>>();
-        seq.append(&mut vec![A, T, C, T]); // read4BasesToUnsignedByte([A, T, C, T]) = 38; read4BasesToUnsignedByte([A, C, T, T]) = 26
+        seq.append(&mut vec![A, C, T, T]); // read4BasesToUnsignedByte([A, T, C, T]) = 38; read4BasesToUnsignedByte([A, C, T, T]) = 26
         let body = e7::build(&seq, &mut rng); // byteToFeatureSpace(38) = 0.3; byteToFeatureSpace(26) = 0.2
         population.push(Organism { genes: seq, body });
     }
