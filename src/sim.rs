@@ -33,10 +33,7 @@ impl<'a, O: std::fmt::Debug + Clone, E: Environment> Simulation<'a, O, E> {
 
     pub fn run_step(&mut self) {
         let mut new_organisms = Vec::new();
-        while let Some(mut org) = self.organisms.pop() {
-            // Update the state of this organism
-            (self.U)(&mut org, &self.environment, &mut self.rng);
-
+        while let Some(org) = self.organisms.pop() {
             // Die?
             if !(self.D)(&org, &self.environment, &mut self.rng) {
                 // Reproduce
@@ -57,15 +54,25 @@ impl<'a, O: std::fmt::Debug + Clone, E: Environment> Simulation<'a, O, E> {
             }
         }
 
-        self.organisms.clear();
+        //self.organisms.clear(); // Should already be empty
         if new_organisms.len() > self.max_sequences {
+            // TODO: Do this without copying
             new_organisms
                 .choose_multiple(&mut self.rng, self.max_sequences)
                 .for_each(|o| self.organisms.push(o.clone()));
         } else {
             self.organisms.append(&mut new_organisms);
         }
+
+        // Update env and orgs for next cycle
+        
+        // Env must tick before org updates, otherwise organisms always appear out phase with env after each step
         self.environment.update();
+
+        for org in &mut self.organisms {
+            // Update the state of this organism
+            (self.U)(org, &self.environment, &mut self.rng);
+        }
 
         self.t += 1;
     }

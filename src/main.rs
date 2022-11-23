@@ -27,9 +27,9 @@ fn main() {
 
     let mut population = Vec::new();
     for _ in 0..100 {
-        let mut seq = (0..4).map(|_| rng.gen::<Base>()).collect::<Vec<Base>>(); // T T C T
-        seq.append(&mut vec![A, T, C, T]);
-        let body = e7::build(&seq, &mut rng); // 166 = 0.3
+        let mut seq = (0..4).map(|_| rng.gen::<Base>()).collect::<Vec<Base>>();
+        seq.append(&mut vec![A, T, C, T]); // read4BasesToUnsignedByte([A, T, C, T]) = 38; read4BasesToUnsignedByte([A, C, T, T]) = 26
+        let body = e7::build(&seq, &mut rng); // byteToFeatureSpace(38) = 0.3; byteToFeatureSpace(26) = 0.2
         population.push(Organism { genes: seq, body });
     }
 
@@ -40,7 +40,7 @@ fn main() {
         U: &e7::update,
         organisms: population,
         environment: e7::Environment7 {
-            safe_zone_low: -0.1,
+            safe_zone_low: -0.3,
             safe_zone_high: 0.0,
         },
         max_sequences: 400,
@@ -56,10 +56,7 @@ fn main() {
             let fit = sim
                 .organisms
                 .iter()
-                .filter(|o| {
-                    o.body.position >= sim.environment.safe_zone_low
-                        && o.body.position <= sim.environment.safe_zone_high
-                })
+                .filter(|o| !e7::inDangerZone(o, &sim.environment))
                 .count();
 
             let avg_pos = sim.organisms.iter().map(|o| o.body.position).sum::<f32>()
@@ -75,13 +72,15 @@ fn main() {
                 / sim.organisms.len() as f32;
 
             println!(
-                "avg pos {}, avg learning {}, in safe zone {}, SZ {}:{}",
+                "avg pos {}, avg learning {}, in safe zone {}, SZ [{},{}]",
                 avg_pos,
                 avg_learning,
                 fit,
                 sim.environment.safe_zone_low,
                 sim.environment.safe_zone_high
             );
+
+            
         }
         sim.run_step();
     }

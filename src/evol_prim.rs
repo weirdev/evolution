@@ -1,5 +1,7 @@
 // Evolution Primitives
 
+use std::os::raw;
+
 use rand::distributions::{Distribution, Standard};
 use rand::{prelude::ThreadRng, Rng};
 
@@ -78,6 +80,17 @@ pub fn byteToFeatureSpace(byte: u8) -> f32 {
 // feat1, feat2, res in [-1,1]; feat1 + feat2 = res
 pub fn wrapping_feature_add(feat1: f32, feat2: f32) -> f32 {
     ((feat1 + feat2 + 3.0) % 2.0) - 1.0
+}
+
+pub fn wrapping_dist(feat1: f32, feat2: f32) -> f32 {
+    let raw_dist = feat2 - feat1;
+    if raw_dist.abs() <= 1.0 { // [-1, 1]
+        raw_dist
+    } else if raw_dist > 1.0 { // [1, 2]
+        raw_dist - 2.0
+    } else { // [-2, -1]
+        2.0 - raw_dist
+    }
 }
 
 pub trait Environment {
