@@ -9,6 +9,7 @@ mod e5;
 mod e6;
 mod e7;
 mod e8;
+mod e9;
 mod evol_prim;
 mod sim;
 
@@ -20,26 +21,26 @@ use sim::Simulation;
 fn main() {
     // let s = vec![T, T, C, T];
     let s = vec![A, T, C, T];
-    let b = read4BasesToUnsignedByte(&mut s.iter());
-    let f = byteToFeatureSpace(b);
+    let b = read4_bases_to_unsigned_byte(&mut s.iter());
+    let f = byte_to_feature_space(b);
     println!("b: {}, f: {}", b, f);
 
     let mut rng = rand::thread_rng();
 
     let mut population = Vec::new();
     for _ in 0..100 {
-        let seq = (0..4).map(|_| rng.gen::<Base>()).collect::<Vec<Base>>();
-        let body = e8::build(&seq, &mut rng); // byteToFeatureSpace(38) = 0.3; byteToFeatureSpace(26) = 0.2
+        let seq = (0..8).map(|_| rng.gen::<Base>()).collect::<Vec<Base>>();
+        let body = e9::build(&seq, &mut rng); // byteToFeatureSpace(38) = 0.3; byteToFeatureSpace(26) = 0.2
         population.push(Organism { genes: seq, body });
     }
 
     let mut sim = Simulation {
-        R: &e8::reproduce,
-        D: &e8::death,
-        B: &e8::build,
-        U: &e8::update,
+        R: &e9::reproduce,
+        D: &e9::death,
+        B: &e9::build,
+        U: &e9::update,
         organisms: population,
-        environment: e8::Environment8 {
+        environment: e9::Environment9 {
             safe_zone_low: 0.6,
             safe_zone_high: 0.8,
         },
@@ -80,19 +81,26 @@ fn main() {
             let avg_pos = sim.organisms.iter().map(|o| o.body.position).sum::<f32>()
                 / sim.organisms.len() as f32;
 
-            let avg_learning = sim
+            let avg_response_product = sim
                 .organisms
                 .iter()
-                .map(|o| o.body.stimulus_response_factor)
+                .map(|o| o.body.stimulus_response_vector.iter().map(|e| *e).reduce(|p, e| p * e).unwrap_or(0.0))
                 .sum::<f32>()
                 // .filter(|r| (r - 0.3).abs() < 0.1)
                 // .count() as f32
                 / sim.organisms.len() as f32;
-            let stdev_learning = sim
+            let stdev_response_product = sim
                 .organisms
                 .iter()
-                .map(|o| o.body.stimulus_response_factor)
-                .map(|l| (l - avg_learning).powi(2))
+                .map(|o| {
+                    o.body
+                        .stimulus_response_vector
+                        .iter()
+                        .map(|e| *e)
+                        .reduce(|p, e| p * e)
+                        .unwrap_or(0.0)
+                })
+                .map(|l| (l - avg_response_product).powi(2))
                 .sum::<f32>()
                 .sqrt()
                 / sim.organisms.len() as f32;
@@ -100,8 +108,8 @@ fn main() {
             println!(
                 "avg pos {}, avg learning {}, stdev learning {}, in safe zone {}, SZ [{},{}]",
                 avg_pos,
-                avg_learning,
-                stdev_learning,
+                avg_response_product,
+                stdev_response_product,
                 fit,
                 sim.environment.safe_zone_low,
                 sim.environment.safe_zone_high

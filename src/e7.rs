@@ -66,17 +66,17 @@ pub fn update(org: &mut Organism<Body7>, env: &Environment7, rng: &mut ThreadRng
 pub fn build(seq: &BaseSeq, rng: &mut ThreadRng) -> Body7 {
     let mut si = seq.iter().peekable();
 
-    let pos_raw = read4BasesToUnsignedByte(&mut si);
+    let pos_raw = read4_bases_to_unsigned_byte(&mut si);
 
     let mut learn_raw = 0;
     if let Some(_) = si.peek() {
-        learn_raw = read4BasesToUnsignedByte(&mut si);
+        learn_raw = read4_bases_to_unsigned_byte(&mut si);
     }
 
     // Cast into [-1, 1]
     Body7 {
-        position: byteToFeatureSpace(pos_raw),
-        learned_response: byteToFeatureSpace(learn_raw),
+        position: byte_to_feature_space(pos_raw),
+        learned_response: byte_to_feature_space(learn_raw),
         track: false,
     }
 }

@@ -62,7 +62,7 @@ pub struct Organism<O> {
     pub body: O,
 }
 
-pub fn read4BasesToUnsignedByte(bases: &mut dyn Iterator<Item = &Base>) -> u8 {
+pub fn read4_bases_to_unsigned_byte(bases: &mut dyn Iterator<Item = &Base>) -> u8 {
     let mut byte: u8 = 0;
     for _ in 0..4 {
         byte <<= 2;
@@ -71,7 +71,7 @@ pub fn read4BasesToUnsignedByte(bases: &mut dyn Iterator<Item = &Base>) -> u8 {
     byte
 }
 
-pub fn byteToFeatureSpace(byte: u8) -> f32 {
+pub fn byte_to_feature_space(byte: u8) -> f32 {
     (byte.wrapping_add(128) as i32 - 128) as f32 / 128.0
 }
 
