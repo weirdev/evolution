@@ -1,7 +1,5 @@
 // Evolution Primitives
 
-use std::os::raw;
-
 use rand::distributions::{Distribution, Standard};
 use rand::{prelude::ThreadRng, Rng};
 
@@ -94,5 +92,17 @@ pub fn wrapping_dist(feat1: f32, feat2: f32) -> f32 {
 }
 
 pub trait Environment {
-    fn update(&mut self);
+    fn update(&mut self, rng: &mut ThreadRng);
+}
+
+pub fn in_zone_possibly_wrapped(mut pos: f32, zone_low: f32, mut zone_high: f32) -> bool {
+    if zone_low > zone_high {
+        // wrapped?
+        if pos < zone_high {
+            pos += 2.0;
+        }
+        zone_high += 2.0;
+    }
+
+    pos >= zone_low && pos <= zone_high
 }

@@ -67,7 +67,7 @@ impl<'a, O: std::fmt::Debug + Clone, E: Environment> Simulation<'a, O, E> {
         // Update env and orgs for next cycle
 
         // Env must tick before org updates, otherwise organisms always appear out phase with env after each step
-        self.environment.update();
+        self.environment.update(&mut self.rng);
 
         for org in &mut self.organisms {
             // Update the state of this organism

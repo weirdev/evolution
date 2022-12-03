@@ -8,6 +8,7 @@ mod e4;
 mod e5;
 mod e6;
 mod e7;
+mod e8;
 mod evol_prim;
 mod sim;
 
@@ -27,21 +28,20 @@ fn main() {
 
     let mut population = Vec::new();
     for _ in 0..100 {
-        let mut seq = (0..4).map(|_| rng.gen::<Base>()).collect::<Vec<Base>>();
-        seq.append(&mut vec![A, C, T, T]); // read4BasesToUnsignedByte([A, T, C, T]) = 38; read4BasesToUnsignedByte([A, C, T, T]) = 26
-        let body = e7::build(&seq, &mut rng); // byteToFeatureSpace(38) = 0.3; byteToFeatureSpace(26) = 0.2
+        let seq = (0..4).map(|_| rng.gen::<Base>()).collect::<Vec<Base>>();
+        let body = e8::build(&seq, &mut rng); // byteToFeatureSpace(38) = 0.3; byteToFeatureSpace(26) = 0.2
         population.push(Organism { genes: seq, body });
     }
 
     let mut sim = Simulation {
-        R: &e7::reproduce,
-        D: &e7::death,
-        B: &e7::build,
-        U: &e7::update,
+        R: &e8::reproduce,
+        D: &e8::death,
+        B: &e8::build,
+        U: &e8::update,
         organisms: population,
-        environment: e7::Environment7 {
-            safe_zone_low: -0.3,
-            safe_zone_high: 0.0,
+        environment: e8::Environment8 {
+            safe_zone_low: 0.6,
+            safe_zone_high: 0.8,
         },
         max_sequences: 400,
         t: 0,
@@ -50,13 +50,31 @@ fn main() {
     };
 
     while sim.t < sim.max_t {
+        // sim.organisms = sim
+        //     .organisms
+        //     .into_iter()
+        //     .map(|o| {
+        //         let body = e8::build(&o.genes, &mut sim.rng);
+        //         Organism {
+        //             genes: o.genes,
+        //             body,
+        //         }
+        //     })
+        //     .collect();
+
         if sim.t % 1 == 0 {
             //println!("{:?}", sim.E);
             println!("Population size: {}", sim.organisms.len());
             let fit = sim
                 .organisms
                 .iter()
-                .filter(|o| !e7::inDangerZone(o, &sim.environment))
+                .filter(|o| {
+                    in_zone_possibly_wrapped(
+                        o.body.position,
+                        sim.environment.safe_zone_low,
+                        sim.environment.safe_zone_high,
+                    )
+                })
                 .count();
 
             let avg_pos = sim.organisms.iter().map(|o| o.body.position).sum::<f32>()
@@ -65,22 +83,29 @@ fn main() {
             let avg_learning = sim
                 .organisms
                 .iter()
-                .map(|o| o.body.learned_response)
+                .map(|o| o.body.stimulus_response_factor)
                 .sum::<f32>()
                 // .filter(|r| (r - 0.3).abs() < 0.1)
                 // .count() as f32
                 / sim.organisms.len() as f32;
+            let stdev_learning = sim
+                .organisms
+                .iter()
+                .map(|o| o.body.stimulus_response_factor)
+                .map(|l| (l - avg_learning).powi(2))
+                .sum::<f32>()
+                .sqrt()
+                / sim.organisms.len() as f32;
 
             println!(
-                "avg pos {}, avg learning {}, in safe zone {}, SZ [{},{}]",
+                "avg pos {}, avg learning {}, stdev learning {}, in safe zone {}, SZ [{},{}]",
                 avg_pos,
                 avg_learning,
+                stdev_learning,
                 fit,
                 sim.environment.safe_zone_low,
                 sim.environment.safe_zone_high
             );
-
-            
         }
         sim.run_step();
     }

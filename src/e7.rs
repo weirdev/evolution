@@ -16,7 +16,7 @@ pub struct Environment7 {
 }
 
 impl Environment for Environment7 {
-    fn update(&mut self) {
+    fn update(&mut self, rng: &mut ThreadRng) {
         let move_on_tick = 0.3;
         self.safe_zone_low = wrapping_feature_add(self.safe_zone_low, move_on_tick);
         self.safe_zone_high = wrapping_feature_add(self.safe_zone_high, move_on_tick);
@@ -24,17 +24,7 @@ impl Environment for Environment7 {
 }
 
 pub fn inDangerZone(org: &Organism<Body7>, env: &Environment7) -> bool {
-    let mut zone_high = env.safe_zone_high;
-    let mut pos = org.body.position;
-    if env.safe_zone_low > zone_high {
-        // wrapped?
-        if pos < zone_high {
-            pos += 2.0;
-        }
-        zone_high += 2.0;
-    }
-
-    pos < env.safe_zone_low || pos > zone_high
+    !in_zone_possibly_wrapped(org.body.position, env.safe_zone_low, env.safe_zone_high)
 }
 
 pub fn death(org: &Organism<Body7>, env: &Environment7, rng: &mut ThreadRng) -> bool {
