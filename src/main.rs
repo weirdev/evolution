@@ -10,6 +10,7 @@ mod e6;
 mod e7;
 mod e8;
 mod e9;
+mod e10;
 mod evol_prim;
 mod sim;
 
@@ -30,17 +31,18 @@ fn main() {
     let mut population = Vec::new();
     for _ in 0..100 {
         let seq = (0..8).map(|_| rng.gen::<Base>()).collect::<Vec<Base>>();
-        let body = e9::build(&seq, &mut rng); // byteToFeatureSpace(38) = 0.3; byteToFeatureSpace(26) = 0.2
+        let body = e10::build(&seq, &mut rng); // byteToFeatureSpace(38) = 0.3; byteToFeatureSpace(26) = 0.2
         population.push(Organism { genes: seq, body });
     }
 
     let mut sim = Simulation {
-        R: &e9::reproduce,
-        D: &e9::death,
-        B: &e9::build,
-        U: &e9::update,
+        R: &e10::reproduce,
+        D: &e10::death,
+        B: &e10::build,
+        U: &e10::update,
+        L: &e10::learn,
         organisms: population,
-        environment: e9::Environment9 {
+        environment: e10::Environment10 {
             safe_zone_low: 0.6,
             safe_zone_high: 0.8,
         },
