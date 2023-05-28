@@ -5,7 +5,7 @@ use crate::evol_prim::*;
 
 #[derive(Debug, Clone)]
 pub struct Body10 {
-    pub position: f32,                      // [-1,1]
+    pub position: f32, // [-1,1]
     // First component is selected, second is learned
     pub stimulus_response_vector: [f32; 2], // [-1,1]
     pub track: bool,
@@ -40,10 +40,11 @@ pub fn reproduce(org: &Organism<Body10>, env: &Environment10, rng: &mut ThreadRn
     }
 }
 
-pub fn update(org: &mut Organism<Body10>, env: &Environment10, rng: &mut ThreadRng) {
-    // Move in response to being in danger zone.
-    // Move to exactly where stimulus * stimulus_reception_factor * stimulus factor indicates
-
+fn stimulus_response_circuit(
+    org: &Organism<Body10>,
+    env: &Environment10,
+    rng: &mut ThreadRng,
+) -> f32 {
     // stimulus = the actual real world event = the position of the middle of the safe zone
     // stimulus_reception = the first order (unlearned) perception of the stimulus
 
@@ -61,21 +62,32 @@ pub fn update(org: &mut Organism<Body10>, env: &Environment10, rng: &mut ThreadR
     let stimulus = env.safe_zone_low + ((env.safe_zone_high - env.safe_zone_low) / 2.0);
     let reception = stimulus_reception(stimulus);
 
-    org.body.position = stimulus_response(reception, &mut org.body.stimulus_response_vector.iter())
+    stimulus_response(
+        reception,
+        &mut org.body.stimulus_response_vector.iter(),
+        rng,
+    )
+}
+
+pub fn update(org: &mut Organism<Body10>, env: &Environment10, rng: &mut ThreadRng) {
+    // Move in response to being in danger zone.
+
+    org.body.position = stimulus_response_circuit(org, env, rng);
 }
 
 fn stimulus_reception(stimulus: f32) -> f32 {
-    stimulus.sqrt() * 3.0 // Second order
-    // stimulus * 4.0 // first order
+    stimulus * 3.0 // Second order
+                   // stimulus * 4.0 // first order
 }
 
 fn stimulus_response(
     reception: f32,
     stimulus_response_vector: &mut dyn Iterator<Item = &f32>,
+    _: &mut ThreadRng,
 ) -> f32 {
     let layer1 = stimulus_response_vector.map(|e| reception * e);
 
-    layer1.reduce(|p, e| p * e).unwrap_or(0.0)
+    layer1.reduce(|p, e| p + e).unwrap_or(0.0)
 }
 
 pub fn learn(org: &mut Organism<Body10>, env: &Environment10) {
@@ -83,7 +95,14 @@ pub fn learn(org: &mut Organism<Body10>, env: &Environment10) {
     // For now, test with a perfectly accurate hardcoded solution
     // TODO: learn function should not have direct access to the current values
     // of the sim response circuit
-    org.body.stimulus_response_vector[1] = 1.0 / (9.0 * org.body.stimulus_response_vector[0])
+
+    //     let target_pos = env.safe_zone_low + ((env.safe_zone_high - env.safe_zone_low) / 2.0);
+    //     let current_learned_pos = stimulus_response_circuit(org, env);
+    // // IP
+    //     org.body.stimulus_response_vector[1] *= target_pos / current_learned_pos;
+
+    org.body.stimulus_response_vector[1] =
+        (1.0 - (3.0 * org.body.stimulus_response_vector[0])) / 3.0
 }
 
 /**
@@ -92,7 +111,7 @@ pub fn learn(org: &mut Organism<Body10>, env: &Environment10) {
  * Treat as little endian, missing bases treated as 0.
  * Finally, subtract 128 divide by 2**7 to cast into the range [-1, 1]
  */
-pub fn build(seq: &BaseSeq, rng: &mut ThreadRng) -> Body10 {
+pub fn build(seq: &BaseSeq, _: &mut ThreadRng) -> Body10 {
     let mut si = seq.iter().peekable();
 
     let mut response1_raw = 0;
@@ -108,10 +127,7 @@ pub fn build(seq: &BaseSeq, rng: &mut ThreadRng) -> Body10 {
     // Cast into [-1, 1]
     Body10 {
         position: 0.0,
-        stimulus_response_vector: [
-            byte_to_feature_space(response1_raw),
-            0.0,
-        ],
+        stimulus_response_vector: [byte_to_feature_space(response1_raw), 0.0],
         track: false,
     }
 }
