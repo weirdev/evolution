@@ -12,7 +12,7 @@ pub struct Simulation<'a, O, E> {
     // Update organism with a single time step
     pub U: &'a dyn Fn(&mut Organism<O>, &E, &mut ThreadRng),
     // Learn
-    pub L: &'a dyn Fn(&mut Organism<O>, &E),
+    pub L: &'a dyn Fn(&mut Organism<O>, &E, &mut ThreadRng),
     // All organisms in simulation
     pub organisms: Vec<Organism<O>>,
     pub environment: E,
@@ -73,15 +73,11 @@ impl<'a, O: std::fmt::Debug + Clone, E: Environment> Simulation<'a, O, E> {
 
         for org in &mut self.organisms {
             // Learn
-            (self.L)(org, &self.environment);
+            (self.L)(org, &self.environment, &mut self.rng);
             // Update the state of this organism
             (self.U)(org, &self.environment, &mut self.rng);
         }
 
         self.t += 1;
     }
-}
-
-pub trait Reproduce {
-    fn reproduce(&self, s: BaseSeq);
 }

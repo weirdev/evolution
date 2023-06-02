@@ -8,6 +8,7 @@ pub struct Body10 {
     pub position: f32, // [-1,1]
     // First component is selected, second is learned
     pub stimulus_response_vector: [f32; 2], // [-1,1]
+    pub learning_factor: f32,               // [0,1]
     pub track: bool,
 }
 
@@ -25,14 +26,14 @@ impl Environment for Environment10 {
 
 pub fn death(org: &Organism<Body10>, env: &Environment10, rng: &mut ThreadRng) -> bool {
     (!in_zone_possibly_wrapped(org.body.position, env.safe_zone_low, env.safe_zone_high)
-        && rng.gen::<f32>() < 0.5)
+        && rng.gen::<f32>() < 0.4)
         ^ (rng.gen::<f32>() < 0.001)
 }
 
 pub fn reproduce(org: &Organism<Body10>, env: &Environment10, rng: &mut ThreadRng) -> Vec<BaseSeq> {
     if in_zone_possibly_wrapped(org.body.position, env.safe_zone_low, env.safe_zone_high) {
         // One child
-        (0..2)
+        (0..1)
             .map(|_| clone_with_mutation(&org.genes, rng, 0.0, 0.0, 0.06))
             .collect()
     } else {
@@ -90,19 +91,30 @@ fn stimulus_response(
     layer1.reduce(|p, e| p + e).unwrap_or(0.0)
 }
 
-pub fn learn(org: &mut Organism<Body10>, env: &Environment10) {
+pub fn learn(org: &mut Organism<Body10>, env: &Environment10, rng: &mut ThreadRng) {
     // Will be its own neural net or some other logic under selection
     // For now, test with a perfectly accurate hardcoded solution
     // TODO: learn function should not have direct access to the current values
     // of the sim response circuit
 
-    //     let target_pos = env.safe_zone_low + ((env.safe_zone_high - env.safe_zone_low) / 2.0);
-    //     let current_learned_pos = stimulus_response_circuit(org, env);
-    // // IP
-    //     org.body.stimulus_response_vector[1] *= target_pos / current_learned_pos;
+    let debug = rng.gen::<f32>() < 0.001;
 
-    org.body.stimulus_response_vector[1] =
-        (1.0 - (3.0 * org.body.stimulus_response_vector[0])) / 3.0
+    let target_pos = env.safe_zone_low + ((env.safe_zone_high - env.safe_zone_low) / 2.0);
+    let current_learned_pos = stimulus_response_circuit(org, env, rng);
+    let loss = target_pos - current_learned_pos;
+
+    if debug {
+        println!(
+            "target_pos: {}, current_learned_pos: {}, loss: {}, learning_factor: {}, updated_srv1: {}, updated_srv1_if_perfect_lf: {}",
+            target_pos, current_learned_pos, loss, org.body.learning_factor, org.body.stimulus_response_vector[1] + loss * org.body.learning_factor, org.body.stimulus_response_vector[1] + loss * 0.3333
+        );
+    }
+
+    // IP
+    org.body.stimulus_response_vector[1] += loss * org.body.learning_factor;
+
+    // org.body.stimulus_response_vector[1] =
+    //     (1.0 - (3.0 * org.body.stimulus_response_vector[0])) / 3.0
 }
 
 /**
@@ -119,15 +131,18 @@ pub fn build(seq: &BaseSeq, _: &mut ThreadRng) -> Body10 {
         response1_raw = read4_bases_to_unsigned_byte(&mut si);
     }
 
-    // let mut response2_raw = 0;
-    // if let Some(_) = si.peek() {
-    //     response2_raw = read4_bases_to_unsigned_byte(&mut si);
-    // }
+    let mut response2_raw = 0;
+    if let Some(_) = si.peek() {
+        response2_raw = read4_bases_to_unsigned_byte(&mut si);
+    }
 
     // Cast into [-1, 1]
     Body10 {
         position: 0.0,
         stimulus_response_vector: [byte_to_feature_space(response1_raw), 0.0],
+        // stimulus_response_vector: [0.0, 0.0],
+        learning_factor: byte_to_feature_space(response2_raw),
+        // learning_factor: 0.0,
         track: false,
     }
 }

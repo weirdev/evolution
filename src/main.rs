@@ -52,6 +52,7 @@ fn main() {
         rng,
     };
 
+    let mut last_5_fit_sum = 0;
     while sim.t < sim.max_t {
         // sim.organisms = sim
         //     .organisms
@@ -80,18 +81,22 @@ fn main() {
                 })
                 .count();
 
+            if sim.t + 5 >= sim.max_t {
+                last_5_fit_sum += fit;
+            }
+
             let avg_pos = sim.organisms.iter().map(|o| o.body.position).sum::<f32>()
                 / sim.organisms.len() as f32;
 
-            let avg_response_product = sim
+            let avg_response_sum = sim
                 .organisms
                 .iter()
-                .map(|o| o.body.stimulus_response_vector.iter().map(|e| *e).reduce(|p, e| p * e).unwrap_or(0.0))
+                .map(|o| o.body.stimulus_response_vector.iter().map(|e| *e).reduce(|p, e| p + e).unwrap_or(0.0))
                 .sum::<f32>()
                 // .filter(|r| (r - 0.3).abs() < 0.1)
                 // .count() as f32
                 / sim.organisms.len() as f32;
-            let stdev_response_product = sim
+            let stdev_response_sum = sim
                 .organisms
                 .iter()
                 .map(|o| {
@@ -99,19 +104,39 @@ fn main() {
                         .stimulus_response_vector
                         .iter()
                         .map(|e| *e)
-                        .reduce(|p, e| p * e)
+                        .reduce(|p, e| p + e)
                         .unwrap_or(0.0)
                 })
-                .map(|l| (l - avg_response_product).powi(2))
+                .map(|l| (l - avg_response_sum).powi(2))
                 .sum::<f32>()
                 .sqrt()
                 / sim.organisms.len() as f32;
 
+            let avg_response_vec = sim
+                .organisms
+                .iter()
+                .map(|o| o.body.stimulus_response_vector)
+                .fold([0.0, 0.0], |a, b| [a[0] + (b[0] / sim.organisms.len() as f32), a[1] + (b[1] / sim.organisms.len() as f32)]);
+                // .filter(|r| (r - 0.3).abs() < 0.1)
+                // .count() as f32
+
+            let avg_learning_factor = sim
+                .organisms
+                .iter()
+                .map(|o| o.body.learning_factor)
+                .sum::<f32>()
+                // .filter(|r| (r - 0.3).abs() < 0.1)
+                // .count() as f32
+                / sim.organisms.len() as f32;
+
             println!(
-                "avg pos {}, avg learning {}, stdev learning {}, in safe zone {}, SZ [{},{}]",
+                "avg pos {}, avg learning {}, avg response vec [{},{}], avg response vec sum {}, stdev response vec sum {}, in safe zone {}, SZ [{},{}]",
                 avg_pos,
-                avg_response_product,
-                stdev_response_product,
+                avg_learning_factor,
+                avg_response_vec[0],
+                avg_response_vec[1],
+                avg_response_sum,
+                stdev_response_sum,
                 fit,
                 sim.environment.safe_zone_low,
                 sim.environment.safe_zone_high
@@ -120,5 +145,7 @@ fn main() {
         sim.run_step();
     }
 
-    println!("{:?}", sim.organisms);
+    println!("Last 5 fit sum: {}", last_5_fit_sum);
+
+    // println!("{:?}", sim.organisms);
 }
