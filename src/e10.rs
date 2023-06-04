@@ -12,6 +12,7 @@ pub struct Body10 {
     pub track: bool,
 }
 
+#[derive(Debug, Clone)]
 pub struct Environment10 {
     pub safe_zone_low: f32,  // [-1,1]
     pub safe_zone_high: f32, // [-1, 1] > safeZoneLow

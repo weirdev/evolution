@@ -81,3 +81,21 @@ impl<'a, O: std::fmt::Debug + Clone, E: Environment> Simulation<'a, O, E> {
         self.t += 1;
     }
 }
+
+impl <'a, O, E> Clone for Simulation<'a, O, E> where E: Clone, O: Clone {
+    fn clone(&self) -> Self {
+        Simulation {
+            R: self.R,
+            D: self.D,
+            B: self.B,
+            U: self.U,
+            L: self.L,
+            organisms: self.organisms.clone(),
+            environment: self.environment.clone(),
+            max_sequences: self.max_sequences,
+            t: self.t,
+            max_t: self.max_t,
+            rng: self.rng.clone(),
+        }
+    }
+}

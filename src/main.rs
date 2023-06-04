@@ -2,6 +2,7 @@ extern crate rand;
 
 mod e0;
 mod e1;
+mod e10;
 mod e2;
 mod e3;
 mod e4;
@@ -10,7 +11,6 @@ mod e6;
 mod e7;
 mod e8;
 mod e9;
-mod e10;
 mod evol_prim;
 mod sim;
 mod vis;
@@ -19,11 +19,9 @@ use evol_prim::Base::*;
 use evol_prim::*;
 use rand::Rng;
 use sim::Simulation;
-use vis::create_image;
+use vis::create_1d_sim_image;
 
 fn main() {
-    create_image();
-    return;
     // let s = vec![T, T, C, T];
     let s = vec![A, T, C, T];
     let b = read4_bases_to_unsigned_byte(&mut s.iter());
@@ -56,19 +54,10 @@ fn main() {
         rng,
     };
 
+    let mut sim_hist_for_display = Vec::new();
     let mut last_5_fit_sum = 0;
     while sim.t < sim.max_t {
-        // sim.organisms = sim
-        //     .organisms
-        //     .into_iter()
-        //     .map(|o| {
-        //         let body = e8::build(&o.genes, &mut sim.rng);
-        //         Organism {
-        //             genes: o.genes,
-        //             body,
-        //         }
-        //     })
-        //     .collect();
+        sim_hist_for_display.push(sim.clone());
 
         if sim.t % 1 == 0 {
             //println!("{:?}", sim.E);
@@ -120,9 +109,14 @@ fn main() {
                 .organisms
                 .iter()
                 .map(|o| o.body.stimulus_response_vector)
-                .fold([0.0, 0.0], |a, b| [a[0] + (b[0] / sim.organisms.len() as f32), a[1] + (b[1] / sim.organisms.len() as f32)]);
-                // .filter(|r| (r - 0.3).abs() < 0.1)
-                // .count() as f32
+                .fold([0.0, 0.0], |a, b| {
+                    [
+                        a[0] + (b[0] / sim.organisms.len() as f32),
+                        a[1] + (b[1] / sim.organisms.len() as f32),
+                    ]
+                });
+            // .filter(|r| (r - 0.3).abs() < 0.1)
+            // .count() as f32
 
             let avg_learning_factor = sim
                 .organisms
@@ -151,5 +145,78 @@ fn main() {
 
     println!("Last 5 fit sum: {}", last_5_fit_sum);
 
+    let (min, max) = sim_hist_for_display
+        .iter()
+        .map(|s| &s.organisms)
+        .map(|o| {
+            (
+                o.iter()
+                    .map(|o| o.body.position)
+                    .reduce(|m, p| if p < m { p } else { m }),
+                o.iter()
+                    .map(|o| o.body.position)
+                    .reduce(|m, p| if p > m { p } else { m }),
+            )
+        })
+        .reduce(|(min, max), (lmin, lmax)| {
+            let min = if let Some(lmin) = lmin {
+                if let Some(min) = min {
+                    if lmin < min {
+                        Some(lmin)
+                    } else {
+                        Some(min)
+                    }
+                } else {
+                    Some(lmin)
+                }
+            } else {
+                min
+            };
+            let max = if let Some(lmax) = lmax {
+                if let Some(max) = max {
+                    if lmax > max {
+                        Some(lmax)
+                    } else {
+                        Some(max)
+                    }
+                } else {
+                    Some(lmax)
+                }
+            } else {
+                max
+            };
+            (min, max)
+        })
+        .unwrap();
+    println!("Min: {}, Max: {}", min.unwrap(), max.unwrap());
+
+    sim_hist_for_display
+        .iter_mut()
+        .map(|s| &mut s.organisms)
+        .for_each(|o| {
+            o.iter_mut().for_each(|o| {
+                let mut pos = (o.body.position + 1.0) / 2.0;
+                if pos < 0.0 {
+                    println!("{} ", pos);
+                    pos = 0.0;
+                } else if pos > 1.0 {
+                    println!("{} ", pos);
+                    pos = 1.0;
+                }
+                o.body.position = pos;
+            })
+        });
+
+    create_1d_sim_image(
+        400,
+        &sim_hist_for_display,
+        |s| Box::new(s.organisms.iter().map(|o| o.body.position)),
+        |s| {
+            (
+                (s.environment.safe_zone_low + 1.0) / 2.0,
+                (s.environment.safe_zone_high + 1.0) / 2.0,
+            )
+        },
+    );
     // println!("{:?}", sim.organisms);
 }
