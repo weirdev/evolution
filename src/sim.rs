@@ -35,6 +35,7 @@ impl<'a, O: std::fmt::Debug + Clone, E: Environment> Simulation<'a, O, E> {
 
     pub fn run_step(&mut self) {
         let mut new_organisms = Vec::new();
+        let mut all_children = Vec::new();
         while let Some(org) = self.organisms.pop() {
             // Die?
             if !(self.D)(&org, &self.environment, &mut self.rng) {
@@ -49,11 +50,18 @@ impl<'a, O: std::fmt::Debug + Clone, E: Environment> Simulation<'a, O, E> {
                             body: child_body,
                         }
                     });
-                new_organisms.extend(babies);
+                all_children.extend(babies);
 
                 // Didn't die so add self
                 new_organisms.push(org);
             }
+        }
+
+        // Limit addition of children so that we don't sample between chidren and parents below
+        // NOTE: Using the sampling below produces extreme genetic swings
+        if new_organisms.len() < self.max_sequences {
+            let current_size = new_organisms.len();
+            new_organisms.extend(&mut all_children.into_iter().take(self.max_sequences - current_size));
         }
 
         //self.organisms.clear(); // Should already be empty

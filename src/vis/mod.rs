@@ -13,14 +13,6 @@ pub fn create_1d_sim_image<'a, S>(
     sim_to_org_display_pos: fn(&'a S) -> Box<dyn Iterator<Item = f32> + 'a>,
     sim_to_safe_zone_bounds: fn(&S) -> (f32, f32),
 ) {
-    // a default (black) image containing Rgb values
-    // let mut image: RgbImage = ImageBuffer::new(max_org_count, sim_history.len() as u32);
-    // ImageBuffer::from_fn(max_org_count, 5, |x, y| {
-    //     let pixel = image.get_pixel_mut(x, y);
-    //     *pixel = image::Rgb([0, 0, 0]);
-    //     *pixel
-    // });
-
     let mut image: RgbImage = ImageBuffer::new(max_org_count, sim_history.len() as u32);
     // Populate the image with the sim history
     for (t, sim) in sim_history.iter().enumerate() {

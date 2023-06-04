@@ -150,8 +150,8 @@ pub fn build(seq: &BaseSeq, _: &mut ThreadRng) -> Body10 {
         position: 0.0,
         stimulus_response_vector: [byte_to_feature_space(response1_raw), 0.0],
         // stimulus_response_vector: [0.0, 0.0],
-        // learning_factor: byte_to_feature_space(response2_raw),
-        learning_factor: 0.0,
+        learning_factor: byte_to_feature_space(response2_raw),
+        // learning_factor: 0.0,
         track: false,
     }
 }
