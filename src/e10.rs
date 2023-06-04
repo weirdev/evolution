@@ -63,11 +63,19 @@ fn stimulus_response_circuit(
     let stimulus = env.safe_zone_low + ((env.safe_zone_high - env.safe_zone_low) / 2.0);
     let reception = stimulus_reception(stimulus);
 
-    stimulus_response(
+    let response = stimulus_response(
         reception,
         &mut org.body.stimulus_response_vector.iter(),
         rng,
-    )
+    );
+
+    if response < -1.0 {
+        -1.0
+    } else if response > 1.0 {
+        1.0
+    } else {
+        response
+    }
 }
 
 pub fn update(org: &mut Organism<Body10>, env: &Environment10, rng: &mut ThreadRng) {
@@ -141,8 +149,8 @@ pub fn build(seq: &BaseSeq, _: &mut ThreadRng) -> Body10 {
         position: 0.0,
         stimulus_response_vector: [byte_to_feature_space(response1_raw), 0.0],
         // stimulus_response_vector: [0.0, 0.0],
-        learning_factor: byte_to_feature_space(response2_raw),
-        // learning_factor: 0.0,
+        // learning_factor: byte_to_feature_space(response2_raw),
+        learning_factor: 0.0,
         track: false,
     }
 }
