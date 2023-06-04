@@ -13,13 +13,17 @@ mod e9;
 mod e10;
 mod evol_prim;
 mod sim;
+mod vis;
 
-pub use evol_prim::Base::*;
-pub use evol_prim::*;
+use evol_prim::Base::*;
+use evol_prim::*;
 use rand::Rng;
 use sim::Simulation;
+use vis::create_image;
 
 fn main() {
+    create_image();
+    return;
     // let s = vec![T, T, C, T];
     let s = vec![A, T, C, T];
     let b = read4_bases_to_unsigned_byte(&mut s.iter());
