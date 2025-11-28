@@ -51,10 +51,12 @@ def sim():
 
     stats: list[SimStepStats] = []
     for step in range(500):
-        stimulus = {0: 1.0}
+        food_quality = float(step % 2)
+        # Stimulus exactly matches environment
+        stimulus = {0: food_quality}
 
         for organism in organisms:
-            organism.step(stimulus)
+            organism.step(stimulus, food_quality)
 
         apply_kills(organisms)
         apply_reproduction(organisms)

@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from .brain import Brain
 from .simrand import RANDOM
 from .stats import SimStepStats
@@ -7,26 +8,32 @@ FERTILE_THRESHOLD = 0.7
 OVEREATEN_THRESHOLD = 1
 
 
+@dataclass
+class Body:
+    fullness: float = 1.0
+
+
 class Organism:
     def __init__(self, brain: Brain):
         self.brain = brain
         self.brain_state: dict[int, float] = {}
-        self._fullness = 1.0
+        self._body = Body()
 
-    def step(self, stimulus: dict[int, float]):
+    def step(self, stimulus: dict[int, float], food_quality: float):
         self.brain_state = self.brain.process_n(stimulus, 3)
-        self._fullness -= 0.5
+
+        output_neuron = self.brain.output_neuron_ids[0]
+        self._body.fullness = self.brain_state[output_neuron]
 
     def should_die(self) -> bool:
         if len(self.brain_state) == 0:
             # Baby
             return False
 
-        output_neuron = self.brain.output_neuron_ids[0]
-        if self.brain_state[output_neuron] < HUNGER_THRESHOLD:
+        if self._body.fullness < HUNGER_THRESHOLD:
             if RANDOM.random() < 0.5:
                 return True
-        if self.brain_state[output_neuron] >= OVEREATEN_THRESHOLD:
+        if self._body.fullness >= OVEREATEN_THRESHOLD:
             if RANDOM.random() < 0.5:
                 return True
         return False
@@ -36,9 +43,7 @@ class Organism:
             # Baby
             return False
 
-        output_neuron = self.brain.output_neuron_ids[0]
-        # Can reproduce if eats > FERTILE_THRESHOLD
-        if self.brain_state[output_neuron] > FERTILE_THRESHOLD:
+        if self._body.fullness > FERTILE_THRESHOLD:
             if RANDOM.random() < 0.2:
                 return True
         return False
@@ -48,12 +53,11 @@ class Organism:
             fit = 1
             fertile = 0
         else:
-            output_neuron = self.brain.output_neuron_ids[0]
             fit = 0
-            if self.brain_state[output_neuron] >= HUNGER_THRESHOLD:
+            if self._body.fullness >= HUNGER_THRESHOLD:
                 fit = 1
             fertile = 0
-            if self.brain_state[output_neuron] > FERTILE_THRESHOLD:
+            if self._body.fullness > FERTILE_THRESHOLD:
                 fertile = 1
 
         return SimStepStats(
