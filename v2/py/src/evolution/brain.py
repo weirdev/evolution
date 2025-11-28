@@ -11,14 +11,14 @@ class NeuronType(Enum):
 
 class Brain:
     def __init__(self):
-        self.neurons: dict[int, Neuron] = {}
-        self.edges: list[Edge] = []
+        self._neurons: dict[int, Neuron] = {}
+        self._edges: list[Edge] = []
         self.input_neuron_ids: list[int] = []
         self.control_neuron_ids: list[int] = []
         self.output_neuron_ids: list[int] = []
 
     def add_neuron(self, neuron: Neuron, neuron_type: NeuronType):
-        self.neurons[neuron.id] = neuron
+        self._neurons[neuron.id] = neuron
         if neuron_type == NeuronType.INPUT:
             self.input_neuron_ids.append(neuron.id)
         elif neuron_type == NeuronType.CONTROL:
@@ -29,27 +29,37 @@ class Brain:
             raise Exception("Unknown NeuronType")
 
     def add_edge(self, edge: Edge):
-        self.edges.append(edge)
+        self._edges.append(edge)
 
     def process_n(
         self, input_neuron_values: dict[int, float], n: int
     ) -> dict[int, float]:
         neuron_values = input_neuron_values
         for _ in range(n):
-            neuron_values = self.step(neuron_values)
+            neuron_values = self._step(neuron_values)
         return neuron_values
 
-    def step(self, neuron_values: dict[int, float]) -> dict[int, float]:
-        signals: dict[int, list[float]] = {neuron_id: [] for neuron_id in self.neurons}
+    def _step(self, neuron_values: dict[int, float]) -> dict[int, float]:
+        signals: dict[int, list[float]] = {neuron_id: [] for neuron_id in self._neurons}
 
-        for edge in self.edges:
+        for edge in self._edges:
             source_output = neuron_values.get(edge.source, 0.0)
             transmitted_signal = edge.transmit(source_output)
             signals[edge.target].append(transmitted_signal)
 
         neuron_values: dict[int, float] = {
             neuron_id: neuron.activate(signals[neuron_id])
-            for neuron_id, neuron in self.neurons.items()
+            for neuron_id, neuron in self._neurons.items()
         }
 
         return neuron_values
+
+    def deepcopy(self) -> "Brain":
+        new = Brain()
+        new._neurons = {id: n.deepcopy() for id, n in self._neurons.items()}
+        new._edges = [e.deepcopy() for e in self._edges]
+        new.input_neuron_ids = [id for id in self.input_neuron_ids]
+        new.control_neuron_ids = [id for id in self.control_neuron_ids]
+        new.output_neuron_ids = [id for id in self.output_neuron_ids]
+
+        return new

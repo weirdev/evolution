@@ -8,6 +8,9 @@ RANDOM_UNSEEDED = random.Random()
 SEED = RANDOM_UNSEEDED.randrange(1000)
 RANDOM = random.Random(SEED)
 
+HUNGER_THRESHOLD = 0.5
+FERTILE_THRESHOLD = 0.7
+
 
 def create_brain() -> Brain:
     brain = Brain()
@@ -53,7 +56,7 @@ def sim():
 
     brains = [create_brain() for _ in range(100)]
 
-    brain_states = []
+    brain_states: list[dict[int, float]] = []
     for step in range(500):
         stimulus = {0: 1.0}
 
@@ -61,19 +64,54 @@ def sim():
         for brain in brains:
             brain_states.append(brain.process_n(stimulus, 3))
 
-        tokill = set()
-        for bidx, (brain, bstate) in enumerate(zip(brains, brain_states, strict=True)):
-            output_neuron = brain.output_neuron_ids[0]
-            if bstate[output_neuron] < 0.8:
-                if RANDOM.random() < 0.3:
-                    tokill.add(bidx)
+        brains, brain_states = apply_kills(brains, brain_states)
 
-        brains = [b for i, b in enumerate(brains) if i not in tokill]
-        brain_states = [s for i, s in enumerate(brain_states) if i not in tokill]
+        babies = []
+        for bidx, (brain, bstate) in enumerate(zip(brains, brain_states, strict=True)):
+            if len(babies) + len(brains) >= 100:
+                break
+            output_neuron = brain.output_neuron_ids[0]
+            # Can reproduce if eats > FERTILE_THRESHOLD
+            if bstate[output_neuron] > FERTILE_THRESHOLD:
+                if RANDOM.random() < 0.3:
+                    # Asexual reproduction
+                    baby = brain.deepcopy()
+                    babies.append((baby, baby.process_n(stimulus, 3)))
+
+        for baby, bstate in babies:
+            brains.append(baby)
+            brain_states.append(bstate)
 
         living_count = len(brains)
+        fit_count = 0
+        fertile_count = 0
+        for bidx, (brain, bstate) in enumerate(zip(brains, brain_states, strict=True)):
+            output_neuron = brain.output_neuron_ids[0]
+            # May die if eats < HUNGER_THRESHOLD
+            if bstate[output_neuron] >= HUNGER_THRESHOLD:
+                fit_count += 1
+            # Can reproduce if eats > FERTILE_THRESHOLD
+            if bstate[output_neuron] > FERTILE_THRESHOLD:
+                fertile_count += 1
 
-        print(f"After sim step {step}, {living_count} organisms remaining")
+        print(
+            f"After sim step {step}, {living_count} organisms remaining. {fit_count} fit, {fertile_count} fertile"
+        )
+
+
+def apply_kills(brains: list[Brain], brain_states: list[dict[int, float]]):
+    tokill = set()
+    for bidx, (brain, bstate) in enumerate(zip(brains, brain_states, strict=True)):
+        output_neuron = brain.output_neuron_ids[0]
+        # May die if eats < HUNGER_THRESHOLD
+        if bstate[output_neuron] < HUNGER_THRESHOLD:
+            if RANDOM.random() < 0.3:
+                tokill.add(bidx)
+
+    brains = [b for i, b in enumerate(brains) if i not in tokill]
+    brain_states = [s for i, s in enumerate(brain_states) if i not in tokill]
+
+    return (brains, brain_states)
 
 
 if __name__ == "__main__":
@@ -81,7 +119,7 @@ if __name__ == "__main__":
 
 """
 Ideas:
-1. Eat to live
+1. ~~Eat to live~~
 2. Overeating kills
 3. Perceive presence of food
 """

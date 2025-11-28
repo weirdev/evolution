@@ -14,6 +14,9 @@ class Neuron:
     def _relu(self, x: float) -> float:
         return min(max(0.0, x), 1.0)
 
+    def deepcopy(self) -> "Neuron":
+        return Neuron(self.id, self.bias, self.reset_factor)
+
 
 class Edge:
     def __init__(self, source: int, target: int, weight: float):
@@ -23,3 +26,6 @@ class Edge:
 
     def transmit(self, signal: float) -> float:
         return signal * self.weight
+
+    def deepcopy(self) -> "Edge":
+        return Edge(self.source, self.target, self.weight)
