@@ -10,6 +10,7 @@ RANDOM = random.Random(SEED)
 
 HUNGER_THRESHOLD = 0.5
 FERTILE_THRESHOLD = 0.7
+OVEREATEN_THRESHOLD = 1
 
 
 def create_brain() -> Brain:
@@ -64,23 +65,8 @@ def sim():
         for brain in brains:
             brain_states.append(brain.process_n(stimulus, 3))
 
-        brains, brain_states = apply_kills(brains, brain_states)
-
-        babies = []
-        for bidx, (brain, bstate) in enumerate(zip(brains, brain_states, strict=True)):
-            if len(babies) + len(brains) >= 100:
-                break
-            output_neuron = brain.output_neuron_ids[0]
-            # Can reproduce if eats > FERTILE_THRESHOLD
-            if bstate[output_neuron] > FERTILE_THRESHOLD:
-                if RANDOM.random() < 0.3:
-                    # Asexual reproduction
-                    baby = brain.deepcopy()
-                    babies.append((baby, baby.process_n(stimulus, 3)))
-
-        for baby, bstate in babies:
-            brains.append(baby)
-            brain_states.append(bstate)
+        apply_kills(brains, brain_states)
+        apply_reproduction(brains, brain_states, stimulus)
 
         living_count = len(brains)
         fit_count = 0
@@ -105,13 +91,36 @@ def apply_kills(brains: list[Brain], brain_states: list[dict[int, float]]):
         output_neuron = brain.output_neuron_ids[0]
         # May die if eats < HUNGER_THRESHOLD
         if bstate[output_neuron] < HUNGER_THRESHOLD:
-            if RANDOM.random() < 0.3:
+            if RANDOM.random() < 0.5:
+                tokill.add(bidx)
+        if bstate[output_neuron] >= OVEREATEN_THRESHOLD:
+            if RANDOM.random() < 0.5:
                 tokill.add(bidx)
 
-    brains = [b for i, b in enumerate(brains) if i not in tokill]
-    brain_states = [s for i, s in enumerate(brain_states) if i not in tokill]
+    brains[:] = [b for i, b in enumerate(brains) if i not in tokill]
+    brain_states[:] = [s for i, s in enumerate(brain_states) if i not in tokill]
 
-    return (brains, brain_states)
+
+def apply_reproduction(
+    brains: list[Brain],
+    brain_states: list[dict[int, float]],
+    stimulus: dict[int, float],
+):
+    babies = []
+    for bidx, (brain, bstate) in enumerate(zip(brains, brain_states, strict=True)):
+        if len(babies) + len(brains) >= 100:
+            break
+        output_neuron = brain.output_neuron_ids[0]
+        # Can reproduce if eats > FERTILE_THRESHOLD
+        if bstate[output_neuron] > FERTILE_THRESHOLD:
+            if RANDOM.random() < 0.2:
+                # Asexual reproduction
+                baby = brain.deepcopy()
+                babies.append((baby, baby.process_n(stimulus, 3)))
+
+    for baby, bstate in babies:
+        brains.append(baby)
+        brain_states.append(bstate)
 
 
 if __name__ == "__main__":
