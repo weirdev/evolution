@@ -5,6 +5,9 @@ from .simrand import RANDOM, SEED
 from .stats import SimStepStats, plot_sim_stats
 
 
+MAX_ORGANISMS = 1000
+
+
 def create_brain() -> Brain:
     brain = Brain()
 
@@ -33,7 +36,7 @@ def add_neurons_to_brain(brain: Brain):
 def sim():
     print(f"Seed: {SEED}\n")
 
-    organisms = [Organism(create_brain()) for _ in range(100)]
+    organisms = [Organism(create_brain()) for _ in range(MAX_ORGANISMS)]
 
     stats: list[SimStepStats] = []
     for step in range(500):
@@ -74,7 +77,7 @@ def apply_reproduction(
 ):
     babies = []
     for oidx, organism in enumerate(organisms):
-        if len(babies) + len(organisms) >= 100:
+        if len(babies) + len(organisms) >= MAX_ORGANISMS:
             break
         if organism.should_reproduce():
             # Asexual reproduction

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from .brain import Brain
+from .brain import Brain, NeuronType
 from .simrand import RANDOM
 from .stats import SimStepStats
 
@@ -11,7 +11,7 @@ OVEREATEN_THRESHOLD = 1
 @dataclass
 class Body:
     fullness: float = 1.0
-    poisioned: bool = False
+    poisoned: bool = False
 
 
 class Organism:
@@ -28,14 +28,14 @@ class Organism:
         self._body.fullness = consumed_amount
 
         if food_quality < 0.1 and consumed_amount > 0.2:
-            self._body.poisioned = True
+            self._body.poisoned = True
 
     def should_die(self) -> bool:
         if len(self.brain_state) == 0:
             # Baby
             return False
 
-        if self._body.poisioned:
+        if self._body.poisoned:
             if RANDOM.random() < 0.14:
                 return True
 
@@ -69,14 +69,14 @@ class Organism:
             if self._body.fullness > FERTILE_THRESHOLD:
                 fertile = 1
 
-        poisioned = 1 if self._body.poisioned else 0
+        poisoned = 1 if self._body.poisoned else 0
 
         return SimStepStats(
             step=step,
             living_count=1,
             fit_count=fit,
             fertile_count=fertile,
-            poisioned_count=poisioned,
+            poisoned_count=poisoned,
         )
 
     def create_baby(self) -> "Organism":
@@ -84,6 +84,9 @@ class Organism:
         baby_brain = self.brain.deepcopy()
 
         # Evolution
-        # baby_brain.add_neuron()
+        for _ in range(4):
+            baby_brain.add_default_neuron(NeuronType.CONTROL)
+        for _ in range(12):
+            baby_brain.add_random_edge()
 
         return Organism(baby_brain)
