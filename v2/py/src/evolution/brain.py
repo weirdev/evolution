@@ -73,12 +73,12 @@ class Brain:
 
         self.add_edge(Edge(src, dst, weight))
 
-    def add_default_neuron(self, neuron_type: NeuronType):
+    def add_default_neuron(self, neuron_type: NeuronType) -> int:
         bias = (RANDOM.random() * 2) - 1
         reset_factor = RANDOM.random()
-        self.add_neuron(
-            Neuron(max(self._neurons, default=-1) + 1, bias, reset_factor), neuron_type
-        )
+        neuron_id = max(self._neurons, default=-1) + 1
+        self.add_neuron(Neuron(neuron_id, bias, reset_factor), neuron_type)
+        return neuron_id
 
     def to_json(self) -> JsonObject:
         return {
