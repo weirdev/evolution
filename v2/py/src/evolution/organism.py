@@ -84,9 +84,11 @@ class Organism:
         baby_brain = self.brain.deepcopy()
 
         # Evolution
-        for _ in range(4):
-            baby_brain.add_default_neuron(NeuronType.CONTROL)
-        for _ in range(12):
-            baby_brain.add_random_edge()
+        if len(baby_brain._neurons) < 10:
+            for _ in range(4):
+                baby_brain.add_default_neuron(NeuronType.CONTROL)
+            for _ in range(12):
+                baby_brain.add_random_edge()
+        # TODO: Add and remove neurons / connections during evolution
 
         return Organism(baby_brain)
