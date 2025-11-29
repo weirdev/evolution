@@ -36,7 +36,7 @@ class Organism:
             return False
 
         if self._body.poisioned:
-            if RANDOM.random() < 0.7:
+            if RANDOM.random() < 0.14:
                 return True
 
         if self._body.fullness < HUNGER_THRESHOLD:
@@ -52,9 +52,9 @@ class Organism:
             # Baby
             return False
 
-        # if self._body.fullness > FERTILE_THRESHOLD:
-        #     if RANDOM.random() < 0.2:
-        #         return True
+        if self._body.fullness > FERTILE_THRESHOLD:
+            if RANDOM.random() < 0.17:
+                return True
         return False
 
     def get_stats(self, step: int) -> SimStepStats:
