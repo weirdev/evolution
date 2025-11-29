@@ -1,6 +1,8 @@
+from pathlib import Path
 from .brain import Brain, NeuronType
 from .neuron import Neuron, Edge
 from .organism import Organism
+from .serialization import write_to_file
 from .simrand import RANDOM, SEED
 from .stats import SimStepStats, plot_sim_stats
 
@@ -62,6 +64,8 @@ def sim():
 
     plot_sim_stats(stats)
 
+    store_sample_survivors(organisms, 100)
+
 
 def apply_kills(organisms: list[Organism]):
     tokill: set[int] = set()
@@ -84,6 +88,14 @@ def apply_reproduction(
             babies.append(organism.create_baby())
 
     organisms.extend(babies)
+
+
+def store_sample_survivors(organisms: list[Organism], n: int):
+    sample = RANDOM.sample(organisms, n)
+    sample_array = [o.to_json() for o in sample]
+    sample_object = {"samples": sample_array}
+
+    write_to_file(Path("stored_organisms") / "sample1.json", sample_object)
 
 
 if __name__ == "__main__":

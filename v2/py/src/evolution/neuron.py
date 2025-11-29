@@ -1,3 +1,6 @@
+from .serialization import JsonObject
+
+
 class Neuron:
     def __init__(self, id: int, bias: float, reset_factor: float):
         self.id = id
@@ -17,6 +20,13 @@ class Neuron:
     def deepcopy(self) -> "Neuron":
         return Neuron(self.id, self.bias, self.reset_factor)
 
+    def to_json(self) -> JsonObject:
+        return {
+            "id": self.id,
+            "bias": self.bias,
+            "reset_factor": self.reset_factor,
+        }
+
 
 class Edge:
     def __init__(self, source: int, target: int, weight: float):
@@ -29,3 +39,10 @@ class Edge:
 
     def deepcopy(self) -> "Edge":
         return Edge(self.source, self.target, self.weight)
+
+    def to_json(self) -> JsonObject:
+        return {
+            "source": self.source,
+            "target": self.target,
+            "weight": self.weight,
+        }

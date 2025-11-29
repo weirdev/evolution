@@ -1,6 +1,7 @@
 from enum import Enum
 
 from .neuron import Neuron, Edge
+from .serialization import JsonObject
 from .simrand import RANDOM
 
 
@@ -78,3 +79,12 @@ class Brain:
         self.add_neuron(
             Neuron(max(self._neurons, default=-1) + 1, bias, reset_factor), neuron_type
         )
+
+    def to_json(self) -> JsonObject:
+        return {
+            "neurons": [n.to_json() for n in self._neurons.values()],
+            "edges": [e.to_json() for e in self._edges],
+            "input_neuron_ids": self.input_neuron_ids,
+            "control_neuron_ids": self.control_neuron_ids,
+            "output_neuron_ids": self.output_neuron_ids,
+        }

@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from .brain import Brain, NeuronType
+from .serialization import JsonObject
 from .simrand import RANDOM
 from .stats import SimStepStats
 
@@ -92,3 +93,8 @@ class Organism:
         # TODO: Add and remove neurons / connections during evolution
 
         return Organism(baby_brain)
+
+    def to_json(self) -> JsonObject:
+        return {
+            "brain": self.brain.to_json(),
+        }

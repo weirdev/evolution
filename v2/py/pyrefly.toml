@@ -1,0 +1,2 @@
+infer-with-first-use=true
+untyped-def-behavior="check-and-infer-return-type"
