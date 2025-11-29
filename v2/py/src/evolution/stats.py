@@ -7,6 +7,7 @@ class SimStepStats:
     living_count: int
     fit_count: int
     fertile_count: int
+    poisioned_count: int
 
     def __add__(self, other: "SimStepStats"):
         return SimStepStats(
@@ -14,6 +15,13 @@ class SimStepStats:
             living_count=self.living_count + other.living_count,
             fit_count=self.fit_count + other.fit_count,
             fertile_count=self.fertile_count + other.fertile_count,
+            poisioned_count=self.poisioned_count + other.poisioned_count,
+        )
+
+    @classmethod
+    def empty(cls, step: int):
+        return cls(
+            step=step, living_count=0, fit_count=0, fertile_count=0, poisioned_count=0
         )
 
 

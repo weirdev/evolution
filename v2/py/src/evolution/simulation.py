@@ -61,9 +61,7 @@ def sim():
         apply_kills(organisms)
         apply_reproduction(organisms)
 
-        step_stats = SimStepStats(
-            step=step, living_count=0, fit_count=0, fertile_count=0
-        )
+        step_stats = SimStepStats.empty(step)
         for o in organisms:
             step_stats += o.get_stats(step)
 

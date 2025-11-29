@@ -11,6 +11,7 @@ OVEREATEN_THRESHOLD = 1
 @dataclass
 class Body:
     fullness: float = 1.0
+    poisioned: bool = False
 
 
 class Organism:
@@ -23,18 +24,26 @@ class Organism:
         self.brain_state = self.brain.process_n(stimulus, 3)
 
         output_neuron = self.brain.output_neuron_ids[0]
-        self._body.fullness = self.brain_state[output_neuron]
+        consumed_amount = self.brain_state[output_neuron]
+        self._body.fullness = consumed_amount
+
+        if food_quality < 0.1 and consumed_amount > 0.2:
+            self._body.poisioned = True
 
     def should_die(self) -> bool:
         if len(self.brain_state) == 0:
             # Baby
             return False
 
+        if self._body.poisioned:
+            if RANDOM.random() < 0.7:
+                return True
+
         if self._body.fullness < HUNGER_THRESHOLD:
-            if RANDOM.random() < 0.5:
+            if RANDOM.random() < 0.05:
                 return True
         if self._body.fullness >= OVEREATEN_THRESHOLD:
-            if RANDOM.random() < 0.5:
+            if RANDOM.random() < 0.05:
                 return True
         return False
 
@@ -43,9 +52,9 @@ class Organism:
             # Baby
             return False
 
-        if self._body.fullness > FERTILE_THRESHOLD:
-            if RANDOM.random() < 0.2:
-                return True
+        # if self._body.fullness > FERTILE_THRESHOLD:
+        #     if RANDOM.random() < 0.2:
+        #         return True
         return False
 
     def get_stats(self, step: int) -> SimStepStats:
@@ -60,8 +69,14 @@ class Organism:
             if self._body.fullness > FERTILE_THRESHOLD:
                 fertile = 1
 
+        poisioned = 1 if self._body.poisioned else 0
+
         return SimStepStats(
-            step=step, living_count=1, fit_count=fit, fertile_count=fertile
+            step=step,
+            living_count=1,
+            fit_count=fit,
+            fertile_count=fertile,
+            poisioned_count=poisioned,
         )
 
     def create_baby(self) -> "Organism":
