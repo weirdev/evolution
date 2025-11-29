@@ -14,34 +14,20 @@ def create_brain() -> Brain:
     return brain
 
 
-def add_edges_to_brain(brain):
+def add_edges_to_brain(brain: Brain):
     for _ in range(4):
-        src = RANDOM.choice(brain.input_neuron_ids + brain.control_neuron_ids)
-        dst = RANDOM.choice(brain.control_neuron_ids + brain.output_neuron_ids)
-        weight = (RANDOM.random() * 4) - 2
-
-        brain.add_edge(Edge(src, dst, weight))
+        brain.add_random_edge()
 
 
 def add_neurons_to_brain(brain: Brain):
-    neuron_id = 0
     for _ in range(1):
-        brain.add_neuron(create_neuron(neuron_id), NeuronType.INPUT)
-        neuron_id += 1
+        brain.add_default_neuron(NeuronType.INPUT)
 
     for _ in range(2):
-        brain.add_neuron(create_neuron(neuron_id), NeuronType.CONTROL)
-        neuron_id += 1
+        brain.add_default_neuron(NeuronType.CONTROL)
 
     for _ in range(1):
-        brain.add_neuron(create_neuron(neuron_id), NeuronType.OUTPUT)
-        neuron_id += 1
-
-
-def create_neuron(neuron_id) -> Neuron:
-    bias = (RANDOM.random() * 2) - 1
-    reset_factor = RANDOM.random()
-    return Neuron(neuron_id, bias, reset_factor)
+        brain.add_default_neuron(NeuronType.OUTPUT)
 
 
 def sim():

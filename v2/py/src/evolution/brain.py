@@ -1,6 +1,7 @@
 from enum import Enum
 
 from .neuron import Neuron, Edge
+from .simrand import RANDOM
 
 
 class NeuronType(Enum):
@@ -63,3 +64,17 @@ class Brain:
         new.output_neuron_ids = [id for id in self.output_neuron_ids]
 
         return new
+
+    def add_random_edge(self):
+        src = RANDOM.choice(self.input_neuron_ids + self.control_neuron_ids)
+        dst = RANDOM.choice(self.control_neuron_ids + self.output_neuron_ids)
+        weight = (RANDOM.random() * 4) - 2
+
+        self.add_edge(Edge(src, dst, weight))
+
+    def add_default_neuron(self, neuron_type: NeuronType):
+        bias = (RANDOM.random() * 2) - 1
+        reset_factor = RANDOM.random()
+        self.add_neuron(
+            Neuron(max(self._neurons, default=-1) + 1, bias, reset_factor), neuron_type
+        )

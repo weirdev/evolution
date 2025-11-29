@@ -82,4 +82,8 @@ class Organism:
     def create_baby(self) -> "Organism":
         # Asexual reproduction
         baby_brain = self.brain.deepcopy()
+
+        # Evolution
+        # baby_brain.add_neuron()
+
         return Organism(baby_brain)
