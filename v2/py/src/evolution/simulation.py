@@ -3,11 +3,12 @@ from typing import Optional
 from pathlib import Path
 
 from .brain import Brain, NeuronType
-from .neuron import Neuron, Edge
+from .environment import Environment
 from .organism import Organism
 from .serialization import write_to_file, read_from_file
 from .simrand import RANDOM, SEED
 from .stats import SimStepStats, plot_sim_stats
+from .training_functions import int_to_neuron_pattern
 
 
 MAX_ORGANISMS = 1000
@@ -55,27 +56,16 @@ def sim(stored_organism_file: Optional[PathLike]):
 
     if stored_organism_file:
         organisms = load_organisms_from_file(stored_organism_file)
-        for o in organisms:
-            add_int_op_neurons_to_brain(o.brain)
+        # for o in organisms:
+        #     add_int_op_neurons_to_brain(o.brain)
     else:
         organisms = [Organism(create_brain()) for _ in range(MAX_ORGANISMS)]
 
     stats: list[SimStepStats] = []
     for step in range(500):
-        food_quality = float(step % 2)
-        # Stimulus exactly matches environment
-        stimulus = {
-            "input_bad_food": food_quality,
-            "input_int_arg_b0": 0.0,
-            "input_int_arg_b1": 0.0,
-            "input_int_arg_b2": 0.0,
-            "input_int_op_b0": 0.0,
-            "input_int_op_b1": 0.0,
-            "input_int_op_b2": 0.0,
-        }
-
+        stimulus, env = create_stimulus_and_env(step)
         for organism in organisms:
-            organism.step(stimulus, food_quality)
+            organism.step(stimulus, env)
 
         apply_kills(organisms)
         apply_reproduction(organisms)
@@ -93,6 +83,33 @@ def sim(stored_organism_file: Optional[PathLike]):
     plot_sim_stats(stats)
 
     store_sample_survivors(organisms, 100)
+
+
+def create_stimulus_and_env(step: int) -> tuple[dict[str, float], Environment]:
+    # For now stimulus exactly matches environment
+    food_quality = float(step % 2)
+
+    input_int_arg = step % 8
+    input_int_arg_pattern = int_to_neuron_pattern(input_int_arg)
+    input_int_op = 0
+    input_int_op_pattern = int_to_neuron_pattern(input_int_op)
+
+    stimulus = {
+        "input_bad_food": food_quality,
+        "input_int_arg_b0": input_int_arg_pattern[0],
+        "input_int_arg_b1": input_int_arg_pattern[1],
+        "input_int_arg_b2": input_int_arg_pattern[2],
+        "input_int_op_b0": input_int_op_pattern[0],
+        "input_int_op_b1": input_int_op_pattern[1],
+        "input_int_op_b2": input_int_op_pattern[2],
+    }
+    env = Environment(
+        food_quality=food_quality,
+        input_int_arg=input_int_arg,
+        input_int_op=input_int_op,
+    )
+
+    return (stimulus, env)
 
 
 def apply_kills(organisms: list[Organism]):
@@ -123,7 +140,7 @@ def store_sample_survivors(organisms: list[Organism], n: int):
     sample_array = [o.to_json() for o in sample]
     sample_object = {"samples": sample_array}
 
-    write_to_file(Path("stored_organisms") / "sample1.json", sample_object)
+    write_to_file(Path("stored_organisms") / "sample2.json", sample_object)
 
 
 def load_organisms_from_file(filename: PathLike) -> list[Organism]:
@@ -134,7 +151,7 @@ def load_organisms_from_file(filename: PathLike) -> list[Organism]:
 
 def main():
     # sim(None)
-    sim(Path("stored_organisms") / "sample0.json")
+    sim(Path("stored_organisms") / "sample1.json")
 
 
 if __name__ == "__main__":

@@ -1,5 +1,7 @@
 from dataclasses import dataclass
+
 from .brain import Brain, NeuronType
+from .environment import Environment
 from .serialization import JsonObject
 from .simrand import RANDOM
 from .stats import SimStepStats
@@ -22,7 +24,7 @@ class Organism:
         self.brain_state: dict[int, float] = {}
         self._body = Body()
 
-    def step(self, stimulus: dict[str, float], food_quality: float):
+    def step(self, stimulus: dict[str, float], env: Environment):
         self.brain_state = self.brain.process_n(stimulus, 3)
 
         # Eating training
@@ -30,24 +32,13 @@ class Organism:
         consumed_amount = self.brain_state[output_eat]
         self._body.fullness = consumed_amount
 
-        if food_quality < 0.1 and consumed_amount > 0.2:
+        if env.food_quality < 0.1 and consumed_amount > 0.2:
             self._body.poisoned = True
 
         # Int relation training
-        input_int_pattern = (
-            stimulus["input_int_arg_b0"],
-            stimulus["input_int_arg_b1"],
-            stimulus["input_int_arg_b2"],
+        expected_int_output = get_correct_output(
+            inp=env.input_int_arg, opinp=env.input_int_op
         )
-        input_int = pattern_to_int(input_int_pattern)
-
-        input_op_pattern = (
-            stimulus["input_int_op_b0"],
-            stimulus["input_int_op_b1"],
-            stimulus["input_int_op_b2"],
-        )
-        op_int = pattern_to_int(input_op_pattern)
-        expected_int_output = get_correct_output(inp=input_int, opinp=op_int)
 
         output_int_pattern = (
             self.brain_state[self.brain.labeled_neurons["output_int_result_b0"]],
