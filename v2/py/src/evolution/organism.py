@@ -3,6 +3,7 @@ from .brain import Brain, NeuronType
 from .serialization import JsonObject
 from .simrand import RANDOM
 from .stats import SimStepStats
+from .training_functions import get_correct_output, pattern_to_int
 
 HUNGER_THRESHOLD = 0.5
 FERTILE_THRESHOLD = 0.7
@@ -21,15 +22,40 @@ class Organism:
         self.brain_state: dict[int, float] = {}
         self._body = Body()
 
-    def step(self, stimulus: dict[int, float], food_quality: float):
+    def step(self, stimulus: dict[str, float], food_quality: float):
         self.brain_state = self.brain.process_n(stimulus, 3)
 
-        output_neuron = self.brain.output_neuron_ids[0]
-        consumed_amount = self.brain_state[output_neuron]
+        # Eating training
+        output_eat = self.brain.labeled_neurons["output_eat"]
+        consumed_amount = self.brain_state[output_eat]
         self._body.fullness = consumed_amount
 
         if food_quality < 0.1 and consumed_amount > 0.2:
             self._body.poisoned = True
+
+        # Int relation training
+        input_int_pattern = (
+            stimulus["input_int_arg_b0"],
+            stimulus["input_int_arg_b1"],
+            stimulus["input_int_arg_b2"],
+        )
+        input_int = pattern_to_int(input_int_pattern)
+
+        input_op_pattern = (
+            stimulus["input_int_op_b0"],
+            stimulus["input_int_op_b1"],
+            stimulus["input_int_op_b2"],
+        )
+        op_int = pattern_to_int(input_op_pattern)
+        expected_int_output = get_correct_output(inp=input_int, opinp=op_int)
+
+        output_int_pattern = (
+            self.brain_state[self.brain.labeled_neurons["output_int_result_b0"]],
+            self.brain_state[self.brain.labeled_neurons["output_int_result_b1"]],
+            self.brain_state[self.brain.labeled_neurons["output_int_result_b2"]],
+        )
+        actual_int_output = pattern_to_int(output_int_pattern)
+        # TODO: Affect fitness based on expected vs actual int output
 
     def should_die(self) -> bool:
         if len(self.brain_state) == 0:

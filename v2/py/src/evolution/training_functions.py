@@ -105,7 +105,7 @@ def int_to_neuron_pattern(inp: int) -> tuple[float, float, float]:
     return typing.cast(tuple[float, float, float], tuple(pattern))
 
 
-def output_pattern_to_int(output: tuple[float, float, float]) -> int:
+def pattern_to_int(output: tuple[float, float, float]) -> int:
     val = 0
     for i in range(3):
         val <<= 1

@@ -1,3 +1,4 @@
+from typing import Optional
 from enum import Enum
 
 from .neuron import Neuron, Edge
@@ -18,8 +19,11 @@ class Brain:
         self.input_neuron_ids: list[int] = []
         self.control_neuron_ids: list[int] = []
         self.output_neuron_ids: list[int] = []
+        self.labeled_neurons: dict[str, int] = {}
 
-    def add_neuron(self, neuron: Neuron, neuron_type: NeuronType):
+    def add_neuron(
+        self, neuron: Neuron, neuron_type: NeuronType, label: Optional[str] = None
+    ):
         self._neurons[neuron.id] = neuron
         if neuron_type == NeuronType.INPUT:
             self.input_neuron_ids.append(neuron.id)
@@ -30,13 +34,18 @@ class Brain:
         else:
             raise Exception("Unknown NeuronType")
 
+        if label:
+            self.labeled_neurons[label] = neuron.id
+
     def add_edge(self, edge: Edge):
         self._edges.append(edge)
 
     def process_n(
-        self, input_neuron_values: dict[int, float], n: int
+        self, input_neuron_values: dict[str, float], n: int
     ) -> dict[int, float]:
-        neuron_values = input_neuron_values
+        neuron_values = {
+            self.labeled_neurons[n]: v for n, v in input_neuron_values.items()
+        }
         for _ in range(n):
             neuron_values = self._step(neuron_values)
         return neuron_values
@@ -63,6 +72,7 @@ class Brain:
         new.input_neuron_ids = [id for id in self.input_neuron_ids]
         new.control_neuron_ids = [id for id in self.control_neuron_ids]
         new.output_neuron_ids = [id for id in self.output_neuron_ids]
+        new.labeled_neurons = {label: id for label, id in self.labeled_neurons.items()}
 
         return new
 
@@ -73,12 +83,21 @@ class Brain:
 
         self.add_edge(Edge(src, dst, weight))
 
-    def add_default_neuron(self, neuron_type: NeuronType) -> int:
+    def add_default_neuron(
+        self, neuron_type: NeuronType, label: Optional[str] = None
+    ) -> int:
         bias = (RANDOM.random() * 2) - 1
         reset_factor = RANDOM.random()
         neuron_id = max(self._neurons, default=-1) + 1
-        self.add_neuron(Neuron(neuron_id, bias, reset_factor), neuron_type)
+        self.add_neuron(Neuron(neuron_id, bias, reset_factor), neuron_type, label)
         return neuron_id
+
+    def prune_disconnected_edges(self):
+        pruned_edges = []
+        for edge in self._edges:
+            if (edge.source in self._neurons) and (edge.target in self._neurons):
+                pruned_edges.append(edge)
+        self._edges = pruned_edges
 
     def to_json(self) -> JsonObject:
         return {
@@ -87,17 +106,19 @@ class Brain:
             "input_neuron_ids": self.input_neuron_ids,
             "control_neuron_ids": self.control_neuron_ids,
             "output_neuron_ids": self.output_neuron_ids,
+            "labeled_neurons": self.labeled_neurons,
         }
 
     @classmethod
     def from_json(cls, obj: JsonObject) -> "Brain":
         brain = cls()
-        
+
         neurons = (Neuron.from_json(n) for n in obj["neurons"])
         brain._neurons = {n.id: n for n in neurons}
         brain._edges = [Edge.from_json(e) for e in obj["edges"]]
         brain.input_neuron_ids = obj["input_neuron_ids"]
         brain.control_neuron_ids = obj["control_neuron_ids"]
         brain.output_neuron_ids = obj["output_neuron_ids"]
+        brain.labeled_neurons = obj.get("labeled_neurons", {})
 
         return brain

@@ -16,7 +16,7 @@ MAX_ORGANISMS = 1000
 def create_brain() -> Brain:
     brain = Brain()
 
-    add_neurons_to_brain(brain)
+    add_initial_neurons_to_brain(brain)
     add_edges_to_brain(brain)
 
     return brain
@@ -27,15 +27,26 @@ def add_edges_to_brain(brain: Brain):
         brain.add_random_edge()
 
 
-def add_neurons_to_brain(brain: Brain):
-    for _ in range(1):
-        brain.add_default_neuron(NeuronType.INPUT)
+def add_initial_neurons_to_brain(brain: Brain):
+    brain.add_default_neuron(NeuronType.INPUT, "input_bad_food")
 
     for _ in range(2):
         brain.add_default_neuron(NeuronType.CONTROL)
 
-    for _ in range(1):
-        brain.add_default_neuron(NeuronType.OUTPUT)
+    brain.add_default_neuron(NeuronType.OUTPUT, "output_eat")
+
+
+def add_int_op_neurons_to_brain(brain: Brain):
+    brain.add_default_neuron(NeuronType.INPUT, "input_int_arg_b0")
+    brain.add_default_neuron(NeuronType.INPUT, "input_int_arg_b1")
+    brain.add_default_neuron(NeuronType.INPUT, "input_int_arg_b2")
+    brain.add_default_neuron(NeuronType.INPUT, "input_int_op_b0")
+    brain.add_default_neuron(NeuronType.INPUT, "input_int_op_b1")
+    brain.add_default_neuron(NeuronType.INPUT, "input_int_op_b2")
+
+    brain.add_default_neuron(NeuronType.OUTPUT, "output_int_result_b0")
+    brain.add_default_neuron(NeuronType.OUTPUT, "output_int_result_b1")
+    brain.add_default_neuron(NeuronType.OUTPUT, "output_int_result_b2")
 
 
 def sim(stored_organism_file: Optional[PathLike]):
@@ -50,7 +61,7 @@ def sim(stored_organism_file: Optional[PathLike]):
     for step in range(500):
         food_quality = float(step % 2)
         # Stimulus exactly matches environment
-        stimulus = {0: food_quality}
+        stimulus = {"input_bad_food": food_quality}
 
         for organism in organisms:
             organism.step(stimulus, food_quality)
@@ -111,6 +122,7 @@ def load_organisms_from_file(filename: PathLike) -> list[Organism]:
 
 
 def main():
+    # sim(None)
     sim(Path("stored_organisms") / "sample0.json")
 
 
