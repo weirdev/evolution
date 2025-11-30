@@ -27,6 +27,10 @@ class Neuron:
             "reset_factor": self.reset_factor,
         }
 
+    @classmethod
+    def from_json(cls, obj: JsonObject) -> "Neuron":
+        return cls(id=obj["id"], bias=obj["bias"], reset_factor=obj["reset_factor"])
+
 
 class Edge:
     def __init__(self, source: int, target: int, weight: float):
@@ -46,3 +50,7 @@ class Edge:
             "target": self.target,
             "weight": self.weight,
         }
+
+    @classmethod
+    def from_json(cls, obj: JsonObject) -> "Edge":
+        return cls(source=obj["source"], target=obj["target"], weight=obj["weight"])

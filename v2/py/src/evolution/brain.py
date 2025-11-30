@@ -88,3 +88,16 @@ class Brain:
             "control_neuron_ids": self.control_neuron_ids,
             "output_neuron_ids": self.output_neuron_ids,
         }
+
+    @classmethod
+    def from_json(cls, obj: JsonObject) -> "Brain":
+        brain = cls()
+        
+        neurons = (Neuron.from_json(n) for n in obj["neurons"])
+        brain._neurons = {n.id: n for n in neurons}
+        brain._edges = [Edge.from_json(e) for e in obj["edges"]]
+        brain.input_neuron_ids = obj["input_neuron_ids"]
+        brain.control_neuron_ids = obj["control_neuron_ids"]
+        brain.output_neuron_ids = obj["output_neuron_ids"]
+
+        return brain

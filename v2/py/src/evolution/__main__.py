@@ -1,3 +1,3 @@
-from .simulation import sim
+from .simulation import main
 
-sim()
+main()

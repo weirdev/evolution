@@ -98,3 +98,7 @@ class Organism:
         return {
             "brain": self.brain.to_json(),
         }
+
+    @classmethod
+    def from_json(cls, obj: JsonObject) -> "Organism":
+        return cls(Brain.from_json(obj["brain"]))

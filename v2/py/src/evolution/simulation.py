@@ -1,8 +1,11 @@
+from os import PathLike
+from typing import Optional
 from pathlib import Path
+
 from .brain import Brain, NeuronType
 from .neuron import Neuron, Edge
 from .organism import Organism
-from .serialization import write_to_file
+from .serialization import write_to_file, read_from_file
 from .simrand import RANDOM, SEED
 from .stats import SimStepStats, plot_sim_stats
 
@@ -35,10 +38,13 @@ def add_neurons_to_brain(brain: Brain):
         brain.add_default_neuron(NeuronType.OUTPUT)
 
 
-def sim():
+def sim(stored_organism_file: Optional[PathLike]):
     print(f"Seed: {SEED}\n")
 
-    organisms = [Organism(create_brain()) for _ in range(MAX_ORGANISMS)]
+    if stored_organism_file:
+        organisms = load_organisms_from_file(stored_organism_file)
+    else:
+        organisms = [Organism(create_brain()) for _ in range(MAX_ORGANISMS)]
 
     stats: list[SimStepStats] = []
     for step in range(500):
@@ -98,8 +104,18 @@ def store_sample_survivors(organisms: list[Organism], n: int):
     write_to_file(Path("stored_organisms") / "sample1.json", sample_object)
 
 
+def load_organisms_from_file(filename: PathLike) -> list[Organism]:
+    obj = read_from_file(filename)
+    organisms = obj["samples"]
+    return [Organism.from_json(o) for o in organisms]
+
+
+def main():
+    sim(Path("stored_organisms") / "sample0.json")
+
+
 if __name__ == "__main__":
-    sim()
+    main()
 
 """
 Ideas:
