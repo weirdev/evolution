@@ -40,6 +40,7 @@ def add_int_op_neurons_to_brain(brain: Brain):
     brain.add_default_neuron(NeuronType.INPUT, "input_int_arg_b0")
     brain.add_default_neuron(NeuronType.INPUT, "input_int_arg_b1")
     brain.add_default_neuron(NeuronType.INPUT, "input_int_arg_b2")
+
     brain.add_default_neuron(NeuronType.INPUT, "input_int_op_b0")
     brain.add_default_neuron(NeuronType.INPUT, "input_int_op_b1")
     brain.add_default_neuron(NeuronType.INPUT, "input_int_op_b2")
@@ -54,6 +55,8 @@ def sim(stored_organism_file: Optional[PathLike]):
 
     if stored_organism_file:
         organisms = load_organisms_from_file(stored_organism_file)
+        for o in organisms:
+            add_int_op_neurons_to_brain(o.brain)
     else:
         organisms = [Organism(create_brain()) for _ in range(MAX_ORGANISMS)]
 
@@ -61,7 +64,15 @@ def sim(stored_organism_file: Optional[PathLike]):
     for step in range(500):
         food_quality = float(step % 2)
         # Stimulus exactly matches environment
-        stimulus = {"input_bad_food": food_quality}
+        stimulus = {
+            "input_bad_food": food_quality,
+            "input_int_arg_b0": 0.0,
+            "input_int_arg_b1": 0.0,
+            "input_int_arg_b2": 0.0,
+            "input_int_op_b0": 0.0,
+            "input_int_op_b1": 0.0,
+            "input_int_op_b2": 0.0,
+        }
 
         for organism in organisms:
             organism.step(stimulus, food_quality)

@@ -14,14 +14,14 @@ def validate_0_7_int(inp: int):
 
 
 class I6bOb3Op(Enum):
-    Add2Mod8 = (0,)
-    Add3Mod8 = (1,)
-    Mul2Mod8 = (2,)
-    Mul3Mod8 = (3,)
-    Pow2Mod8 = (4,)
-    Pow3Mod8 = (5,)
-    NegMod8 = (6,)
-    Mul5Mod8 = (7,)
+    Add2Mod8 = 0
+    Add3Mod8 = 1
+    Mul2Mod8 = 2
+    Mul3Mod8 = 3
+    Pow2Mod8 = 4
+    Pow3Mod8 = 5
+    NegMod8 = 6
+    Mul5Mod8 = 7
 
     @classmethod
     def from_inp(cls, opinp: int) -> "I6bOb3Op":
