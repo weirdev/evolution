@@ -1,3 +1,4 @@
+from statistics import mean
 from os import PathLike
 from typing import Optional
 from pathlib import Path
@@ -62,7 +63,7 @@ def sim(stored_organism_file: Optional[PathLike]):
         organisms = [Organism(create_brain()) for _ in range(MAX_ORGANISMS)]
 
     stats: list[SimStepStats] = []
-    for step in range(500):
+    for step in range(200):
         stimulus, env = create_stimulus_and_env(step)
         for organism in organisms:
             organism.step(stimulus, env)
@@ -80,9 +81,31 @@ def sim(stored_organism_file: Optional[PathLike]):
             f"After sim step {step_stats.step}, {step_stats.living_count} organisms remaining. {step_stats.fit_count} fit, {step_stats.fertile_count} fertile"
         )
 
+    org_scores = [
+        (mean(o._body.int_calc_results) if len(o._body.int_calc_results) > 10 else 0)
+        for o in organisms
+    ]
+    best_score = max(org_scores)
+    mean_score = mean(org_scores)
+    print(f"Best organism score: {best_score}, mean organism score {mean_score}")
+    
+    neuron_counts = [len(o.brain._neurons) for o in organisms]
+    print(f"Mean neuron count {mean(neuron_counts)}")
+
+    edge_counts = [len(o.brain._edges) for o in organisms]
+    print(f"Mean edge count {mean(edge_counts)}")
+
     plot_sim_stats(stats)
 
-    store_sample_survivors(organisms, 100)
+    # organisms = [
+    #     os[0]
+    #     for os in sorted(
+    #         zip(organisms, org_scores, strict=True), key=lambda os: os[1], reverse=True
+    #     )
+    # ]
+    # organisms = organisms[: len(organisms) // 2]
+
+    store_sample_survivors(organisms, 150)
 
 
 def create_stimulus_and_env(step: int) -> tuple[dict[str, float], Environment]:
@@ -136,11 +159,14 @@ def apply_reproduction(
 
 
 def store_sample_survivors(organisms: list[Organism], n: int):
-    sample = RANDOM.sample(organisms, n)
+    if len(organisms) > n:
+        sample = RANDOM.sample(organisms, n)
+    else:
+        sample = organisms
     sample_array = [o.to_json() for o in sample]
     sample_object = {"samples": sample_array}
 
-    write_to_file(Path("stored_organisms") / "sample2.json", sample_object)
+    write_to_file(Path("stored_organisms") / "sample101.json", sample_object)
 
 
 def load_organisms_from_file(filename: PathLike) -> list[Organism]:
@@ -151,7 +177,7 @@ def load_organisms_from_file(filename: PathLike) -> list[Organism]:
 
 def main():
     # sim(None)
-    sim(Path("stored_organisms") / "sample1.json")
+    sim(Path("stored_organisms") / "sample100.json")
 
 
 if __name__ == "__main__":

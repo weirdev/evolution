@@ -57,7 +57,7 @@ def add2mod8(inp: int) -> int:
 
 def add3mod8(inp: int) -> int:
     validate_0_7_int(inp)
-    return (inp + 2) % 8
+    return (inp + 3) % 8
 
 
 def mul2mod8(inp: int) -> int:

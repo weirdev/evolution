@@ -83,6 +83,10 @@ class Brain:
 
         self.add_edge(Edge(src, dst, weight))
 
+    def remove_random_edge(self):
+        edge_idx = RANDOM.randrange(len(self._edges))
+        self._edges.pop(edge_idx)
+
     def add_default_neuron(
         self, neuron_type: NeuronType, label: Optional[str] = None
     ) -> int:
@@ -91,6 +95,22 @@ class Brain:
         neuron_id = max(self._neurons, default=-1) + 1
         self.add_neuron(Neuron(neuron_id, bias, reset_factor), neuron_type, label)
         return neuron_id
+
+    def remove_random_neuron(self, neuron_type: NeuronType, autoprune=True):
+        if neuron_type == NeuronType.INPUT:
+            ids = self.input_neuron_ids
+        elif neuron_type == NeuronType.CONTROL:
+            ids = self.control_neuron_ids
+        elif neuron_type == NeuronType.OUTPUT:
+            ids = self.output_neuron_ids
+        else:
+            raise Exception("Unknown neuron type")
+        neuron_idx = RANDOM.randrange(len(ids))
+        del self._neurons[ids[neuron_idx]]
+        ids.pop(neuron_idx)
+
+        if autoprune:
+            self.prune_disconnected_edges()
 
     def prune_disconnected_edges(self):
         pruned_edges = []

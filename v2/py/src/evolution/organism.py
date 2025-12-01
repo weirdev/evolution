@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from typing import Optional
 
 from .brain import Brain, NeuronType
 from .environment import Environment
@@ -10,12 +10,22 @@ from .training_functions import get_correct_output, pattern_to_int
 HUNGER_THRESHOLD = 0.5
 FERTILE_THRESHOLD = 0.7
 OVEREATEN_THRESHOLD = 1
+MAX_NEURONS = 80 # 10 works for 1000 iterations
 
 
-@dataclass
 class Body:
-    fullness: float = 1.0
-    poisoned: bool = False
+    def __init__(
+        self,
+        fullness: float = 1.0,
+        poisoned: bool = False,
+        int_calc_results: Optional[list[bool]] = None,
+    ):
+        self.fullness = fullness
+        self.poisoned = poisoned
+        if int_calc_results is None:
+            self.int_calc_results: list[bool] = []
+        else:
+            self.int_calc_results = int_calc_results
 
 
 class Organism:
@@ -46,7 +56,7 @@ class Organism:
             self.brain_state[self.brain.labeled_neurons["output_int_result_b2"]],
         )
         actual_int_output = pattern_to_int(output_int_pattern)
-        # TODO: Affect fitness based on expected vs actual int output
+        self._body.int_calc_results.append(expected_int_output == actual_int_output)
 
     def should_die(self) -> bool:
         if len(self.brain_state) == 0:
@@ -63,6 +73,10 @@ class Organism:
         if self._body.fullness >= OVEREATEN_THRESHOLD:
             if RANDOM.random() < 0.05:
                 return True
+        if self._body.int_calc_results and not self._body.int_calc_results[-1]:
+            if RANDOM.random() < 0.08:
+                return True
+
         return False
 
     def should_reproduce(self):
@@ -102,11 +116,23 @@ class Organism:
         baby_brain = self.brain.deepcopy()
 
         # Evolution
-        if len(baby_brain._neurons) < 10:
-            for _ in range(4):
+        
+        if len(baby_brain._neurons) < MAX_NEURONS:
+            for _ in range(1):
                 baby_brain.add_default_neuron(NeuronType.CONTROL)
-            for _ in range(12):
+        else:
+            if RANDOM.random() < 0.1:
+                for _ in range(1):
+                    baby_brain.remove_random_neuron(NeuronType.CONTROL, autoprune=False)
+                baby_brain.prune_disconnected_edges()
+
+        # TODO: We will want our brain less connected than this eventually
+        if len(baby_brain._edges) < (len(baby_brain._neurons)**2) // 2:
+            for _ in range(max(len(baby_brain._edges) // 150, 1)):
                 baby_brain.add_random_edge()
+        else:
+            for _ in range(max(len(baby_brain._edges) // 150, 1)):
+                baby_brain.remove_random_edge()
         # TODO: Add and remove neurons / connections during evolution
 
         return Organism(baby_brain)

@@ -29,6 +29,7 @@ def test_brain_to_json():
         "input_neuron_ids",
         "control_neuron_ids",
         "output_neuron_ids",
+        "labeled_neurons",
     }
 
     # neurons order is not guaranteed; verify contents instead
@@ -42,6 +43,7 @@ def test_brain_to_json():
     assert json_obj["input_neuron_ids"] == [0]
     assert json_obj["output_neuron_ids"] == [1]
     assert json_obj["control_neuron_ids"] == []
+    assert json_obj["labeled_neurons"] == {}
 
 
 def test_brain_from_json():
