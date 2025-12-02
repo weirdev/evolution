@@ -53,7 +53,9 @@ def add_int_op_neurons_to_brain(brain: Brain):
     brain.add_default_neuron(NeuronType.OUTPUT, "output_int_result_b2")
 
 
-def sim(stored_organism_file: Optional[PathLike]):
+def sim(
+    stored_organism_file: Optional[PathLike], write_to_organism_file: Optional[PathLike]
+):
     print(f"Seed: {SEED}\n")
 
     if stored_organism_file:
@@ -64,7 +66,7 @@ def sim(stored_organism_file: Optional[PathLike]):
         organisms = [Organism(create_brain()) for _ in range(MAX_ORGANISMS)]
 
     stats: list[SimStepStats] = []
-    for step in range(500):
+    for step in range(150):
         stimulus, env = create_stimulus_and_env(step)
         for organism in organisms:
             organism.step(stimulus, env)
@@ -106,7 +108,8 @@ def sim(stored_organism_file: Optional[PathLike]):
     # ]
     # organisms = organisms[: len(organisms) // 2]
 
-    store_sample_survivors(organisms, 150)
+    if write_to_organism_file:
+        store_sample_survivors(organisms, 150, write_to_organism_file)
 
 
 def create_stimulus_and_env(step: int) -> tuple[dict[str, float], Environment]:
@@ -159,7 +162,9 @@ def apply_reproduction(
     organisms.extend(babies)
 
 
-def store_sample_survivors(organisms: list[Organism], n: int):
+def store_sample_survivors(
+    organisms: list[Organism], n: int, write_to_organism_file: PathLike
+):
     if len(organisms) > n:
         sample = RANDOM.sample(organisms, n)
     else:
@@ -167,7 +172,7 @@ def store_sample_survivors(organisms: list[Organism], n: int):
     sample_array = [o.to_json() for o in sample]
     sample_object = {"samples": sample_array}
 
-    # write_to_file(Path("stored_organisms") / "sample201.json", sample_object)
+    write_to_file(write_to_organism_file, sample_object)
 
 
 def load_organisms_from_file(filename: PathLike) -> list[Organism]:
@@ -178,7 +183,11 @@ def load_organisms_from_file(filename: PathLike) -> list[Organism]:
 
 def main():
     # sim(None)
-    sim(Path("stored_organisms") / "sample200.json")
+    load_file_num = 9
+    sim(
+        Path("stored_organisms") / f"sample{load_file_num}.json",
+        Path("stored_organisms") / f"sample{load_file_num + 1}.json",
+    )
 
 
 if __name__ == "__main__":

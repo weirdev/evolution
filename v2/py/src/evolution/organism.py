@@ -8,9 +8,11 @@ from .stats import SimStepStats
 from .training_functions import get_correct_output, pattern_to_int
 
 HUNGER_THRESHOLD = 0.5
-FERTILE_THRESHOLD = 0.7
+FERTILE_THRESHOLD = 0.7  # 0.7
 OVEREATEN_THRESHOLD = 1
-MAX_NEURONS = 80  # 10 works for 1000 iterations
+MAX_NEURONS = 40  # 10 works for 1000 iterations
+BRAIN_PROCESSING_STEPS = 4
+MASTER_KILL_FACTOR = 1.0
 
 
 class Body:
@@ -35,7 +37,7 @@ class Organism:
         self._body = Body()
 
     def step(self, stimulus: dict[str, float], env: Environment):
-        self.brain_state = self.brain.process_n(stimulus, 3)
+        self.brain_state = self.brain.process_n(stimulus, BRAIN_PROCESSING_STEPS)
 
         # Eating training
         output_eat = self.brain.labeled_neurons["output_eat"]
@@ -64,18 +66,24 @@ class Organism:
             return False
 
         if self._body.poisoned:
-            if RANDOM.random() < 0.14:
+            if RANDOM.random() < 0.14 * MASTER_KILL_FACTOR:
                 return True
 
         if self._body.fullness < HUNGER_THRESHOLD:
-            if RANDOM.random() < 0.05:
+            if RANDOM.random() < 0.05 * MASTER_KILL_FACTOR:
                 return True
         if self._body.fullness >= OVEREATEN_THRESHOLD:
-            if RANDOM.random() < 0.05:
+            if RANDOM.random() < 0.05 * MASTER_KILL_FACTOR:
                 return True
         if self._body.int_calc_results and not self._body.int_calc_results[-1]:
-            if RANDOM.random() < 0.0925:
+            if RANDOM.random() < 0.015 * MASTER_KILL_FACTOR:
                 return True
+        # Big brain penalty (max risk = 1%)
+        if (
+            RANDOM.random()
+            < ((len(self.brain._neurons) / MAX_NEURONS) / 100) * MASTER_KILL_FACTOR
+        ):
+            return True
 
         return False
 
@@ -118,7 +126,7 @@ class Organism:
         # Evolution
 
         if len(baby_brain._neurons) < MAX_NEURONS:
-            if RANDOM.random() < 0.2:
+            if RANDOM.random() < 0.1:
                 for _ in range(1):
                     baby_brain.add_default_neuron(NeuronType.CONTROL)
         else:
@@ -127,16 +135,18 @@ class Organism:
                     baby_brain.remove_random_neuron(NeuronType.CONTROL, autoprune=False)
                 baby_brain.prune_disconnected_edges()
 
-        # TODO: We will want our brain less connected than this eventually
-        if (
-            len(baby_brain._edges) < (len(baby_brain._neurons) ** 2) // 2
-            and RANDOM.random() < 0.95
-        ):
-            for _ in range(max(len(baby_brain._edges) // 380, 1)):
-                baby_brain.add_random_edge()
-        else:
-            for _ in range(max(len(baby_brain._edges) // 300, 1)):
-                baby_brain.remove_random_edge()
+            # TODO: We will want our brain less connected than this eventually
+            if (
+                RANDOM.random() < 0.4
+                and len(baby_brain._edges) < (len(baby_brain._neurons) ** 2) // 2
+            ):
+                if RANDOM.random() < 0.3:
+                    for _ in range(max(len(baby_brain._edges) // 20, 1)):
+                        baby_brain.add_random_edge()
+            else:
+                if RANDOM.random() < 0.5:
+                    for _ in range(max(len(baby_brain._edges) // 20, 1)):
+                        baby_brain.remove_random_edge()
         # TODO: Add and remove neurons / connections during evolution
 
         return Organism(baby_brain)

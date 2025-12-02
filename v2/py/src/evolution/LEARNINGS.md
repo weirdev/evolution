@@ -7,3 +7,7 @@ tune both kill rate (start low go higher) and evolution rate (start high go lowe
     Population explodes -> increase kill rate
     A low evolution rate does not hold back the population growth rate (under a given set of conditions), so if one the the previous two is not in place, the population should explode
     Adjust learning rate on both nodes and edges
+    Bias towards fewer edges (kill / remove nodes/edges during reproduction)
+    Chance for duplicate child organisms
+    Increase brain processing step count
+b224ccf - Sample 200 - Highest acheived int kill rate 0.0925
