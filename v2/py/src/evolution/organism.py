@@ -10,7 +10,7 @@ from .training_functions import get_correct_output, pattern_to_int
 HUNGER_THRESHOLD = 0.5
 FERTILE_THRESHOLD = 0.7
 OVEREATEN_THRESHOLD = 1
-MAX_NEURONS = 80 # 10 works for 1000 iterations
+MAX_NEURONS = 80  # 10 works for 1000 iterations
 
 
 class Body:
@@ -74,7 +74,7 @@ class Organism:
             if RANDOM.random() < 0.05:
                 return True
         if self._body.int_calc_results and not self._body.int_calc_results[-1]:
-            if RANDOM.random() < 0.08:
+            if RANDOM.random() < 0.0925:
                 return True
 
         return False
@@ -116,22 +116,26 @@ class Organism:
         baby_brain = self.brain.deepcopy()
 
         # Evolution
-        
+
         if len(baby_brain._neurons) < MAX_NEURONS:
-            for _ in range(1):
-                baby_brain.add_default_neuron(NeuronType.CONTROL)
+            if RANDOM.random() < 0.2:
+                for _ in range(1):
+                    baby_brain.add_default_neuron(NeuronType.CONTROL)
         else:
-            if RANDOM.random() < 0.1:
+            if RANDOM.random() < 0.2:
                 for _ in range(1):
                     baby_brain.remove_random_neuron(NeuronType.CONTROL, autoprune=False)
                 baby_brain.prune_disconnected_edges()
 
         # TODO: We will want our brain less connected than this eventually
-        if len(baby_brain._edges) < (len(baby_brain._neurons)**2) // 2:
-            for _ in range(max(len(baby_brain._edges) // 150, 1)):
+        if (
+            len(baby_brain._edges) < (len(baby_brain._neurons) ** 2) // 2
+            and RANDOM.random() < 0.95
+        ):
+            for _ in range(max(len(baby_brain._edges) // 380, 1)):
                 baby_brain.add_random_edge()
         else:
-            for _ in range(max(len(baby_brain._edges) // 150, 1)):
+            for _ in range(max(len(baby_brain._edges) // 300, 1)):
                 baby_brain.remove_random_edge()
         # TODO: Add and remove neurons / connections during evolution
 

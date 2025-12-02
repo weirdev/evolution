@@ -19,6 +19,7 @@ def create_brain() -> Brain:
     brain = Brain()
 
     add_initial_neurons_to_brain(brain)
+    add_int_op_neurons_to_brain(brain)
     add_edges_to_brain(brain)
 
     return brain
@@ -63,7 +64,7 @@ def sim(stored_organism_file: Optional[PathLike]):
         organisms = [Organism(create_brain()) for _ in range(MAX_ORGANISMS)]
 
     stats: list[SimStepStats] = []
-    for step in range(200):
+    for step in range(500):
         stimulus, env = create_stimulus_and_env(step)
         for organism in organisms:
             organism.step(stimulus, env)
@@ -88,12 +89,12 @@ def sim(stored_organism_file: Optional[PathLike]):
     best_score = max(org_scores)
     mean_score = mean(org_scores)
     print(f"Best organism score: {best_score}, mean organism score {mean_score}")
-    
+
     neuron_counts = [len(o.brain._neurons) for o in organisms]
-    print(f"Mean neuron count {mean(neuron_counts)}")
+    print(f"Mean neuron count {mean(neuron_counts)}. Max: {max(neuron_counts)}")
 
     edge_counts = [len(o.brain._edges) for o in organisms]
-    print(f"Mean edge count {mean(edge_counts)}")
+    print(f"Mean edge count {mean(edge_counts)}. Max: {max(edge_counts)}")
 
     plot_sim_stats(stats)
 
@@ -166,7 +167,7 @@ def store_sample_survivors(organisms: list[Organism], n: int):
     sample_array = [o.to_json() for o in sample]
     sample_object = {"samples": sample_array}
 
-    write_to_file(Path("stored_organisms") / "sample101.json", sample_object)
+    # write_to_file(Path("stored_organisms") / "sample201.json", sample_object)
 
 
 def load_organisms_from_file(filename: PathLike) -> list[Organism]:
@@ -177,7 +178,7 @@ def load_organisms_from_file(filename: PathLike) -> list[Organism]:
 
 def main():
     # sim(None)
-    sim(Path("stored_organisms") / "sample100.json")
+    sim(Path("stored_organisms") / "sample200.json")
 
 
 if __name__ == "__main__":
