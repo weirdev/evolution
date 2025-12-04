@@ -1,3 +1,4 @@
+from dataclasses import replace
 from statistics import mean
 from os import PathLike
 from typing import Optional
@@ -12,7 +13,9 @@ from .stats import SimStepStats, plot_sim_stats
 from .training_functions import int_to_neuron_pattern
 
 
-MAX_ORGANISMS = 1000
+MAX_ORGANISMS = 10_000
+SIM_STEPS = 1_500
+ORG_SAMPLE_SIZE = 1_000
 
 
 def create_brain() -> Brain:
@@ -66,10 +69,15 @@ def sim(
         organisms = [Organism(create_brain()) for _ in range(MAX_ORGANISMS)]
 
     stats: list[SimStepStats] = []
-    for step in range(150):
+    for step in range(SIM_STEPS):
         stimulus, env = create_stimulus_and_env(step)
-        for organism in organisms:
-            organism.step(stimulus, env)
+        dbgorg = RANDOM.randrange(len(organisms))
+        for oidx, organism in enumerate(organisms):
+            if oidx == dbgorg:
+                denv = replace(env, display_kill_debug=True)
+                organism.step(stimulus, denv)
+            else:
+                organism.step(stimulus, env)
 
         apply_kills(organisms)
         apply_reproduction(organisms)
@@ -85,7 +93,7 @@ def sim(
         )
 
     org_scores = [
-        (mean(o._body.int_calc_results) if len(o._body.int_calc_results) > 10 else 0)
+        (mean(o._body.int_calc_results) if len(o._body.int_calc_results) > 15 else 0)
         for o in organisms
     ]
     best_score = max(org_scores)
@@ -109,7 +117,7 @@ def sim(
     # organisms = organisms[: len(organisms) // 2]
 
     if write_to_organism_file:
-        store_sample_survivors(organisms, 150, write_to_organism_file)
+        store_sample_survivors(organisms, ORG_SAMPLE_SIZE, write_to_organism_file)
 
 
 def create_stimulus_and_env(step: int) -> tuple[dict[str, float], Environment]:
@@ -134,6 +142,7 @@ def create_stimulus_and_env(step: int) -> tuple[dict[str, float], Environment]:
         food_quality=food_quality,
         input_int_arg=input_int_arg,
         input_int_op=input_int_op,
+        display_kill_debug=False,
     )
 
     return (stimulus, env)
@@ -178,16 +187,24 @@ def store_sample_survivors(
 def load_organisms_from_file(filename: PathLike) -> list[Organism]:
     obj = read_from_file(filename)
     organisms = obj["samples"]
-    return [Organism.from_json(o) for o in organisms]
+    orgs = [Organism.from_json(o) for o in organisms]
+    # for o in orgs:
+    #     io_neurons = set(o.brain.input_neuron_ids + o.brain.output_neuron_ids)
+    #     for id, n in o.brain._neurons.items():
+    #         if id in io_neurons:
+    #             n.bias = 0.0
+    #             n.reset_factor = 0.0
+    return orgs
 
 
 def main():
     # sim(None)
-    load_file_num = 9
+    load_file_num = 213
     sim(
         Path("stored_organisms") / f"sample{load_file_num}.json",
         Path("stored_organisms") / f"sample{load_file_num + 1}.json",
     )
+    print(f"Ran sim from file {load_file_num}")
 
 
 if __name__ == "__main__":

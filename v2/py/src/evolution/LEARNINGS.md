@@ -11,3 +11,4 @@ tune both kill rate (start low go higher) and evolution rate (start high go lowe
     Chance for duplicate child organisms
     Increase brain processing step count
 b224ccf - Sample 200 - Highest acheived int kill rate 0.0925
+The more steps needed to evolve an advantageous phenotype, the more gradual learning must be (higher reproduction, more steps)

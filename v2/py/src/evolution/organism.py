@@ -8,11 +8,13 @@ from .stats import SimStepStats
 from .training_functions import get_correct_output, pattern_to_int
 
 HUNGER_THRESHOLD = 0.5
-FERTILE_THRESHOLD = 0.7  # 0.7
+FERTILE_THRESHOLD = 0.7
 OVEREATEN_THRESHOLD = 1
-MAX_NEURONS = 40  # 10 works for 1000 iterations
+MAX_NEURONS = 45  # 10 works for 1000 iterations
 BRAIN_PROCESSING_STEPS = 4
-MASTER_KILL_FACTOR = 1.0
+MASTER_KILL_FACTOR = 0.45
+MASTER_EVOLUTION_RATE = 0.4  # 0.25
+REPRODUCTION_FACTOR = 0.09  # 0.17
 
 
 class Body:
@@ -51,6 +53,8 @@ class Organism:
         expected_int_output = get_correct_output(
             inp=env.input_int_arg, opinp=env.input_int_op
         )
+        # Debug
+        assert env.input_int_op == 0
 
         output_int_pattern = (
             self.brain_state[self.brain.labeled_neurons["output_int_result_b0"]],
@@ -58,6 +62,10 @@ class Organism:
             self.brain_state[self.brain.labeled_neurons["output_int_result_b2"]],
         )
         actual_int_output = pattern_to_int(output_int_pattern)
+        if env.display_kill_debug:
+            print(
+                f"Expected int output: {expected_int_output}. Actual int output: {actual_int_output}"
+            )
         self._body.int_calc_results.append(expected_int_output == actual_int_output)
 
     def should_die(self) -> bool:
@@ -76,14 +84,14 @@ class Organism:
             if RANDOM.random() < 0.05 * MASTER_KILL_FACTOR:
                 return True
         if self._body.int_calc_results and not self._body.int_calc_results[-1]:
-            if RANDOM.random() < 0.015 * MASTER_KILL_FACTOR:
+            if RANDOM.random() < 0.05 * MASTER_KILL_FACTOR: # 0.129
                 return True
         # Big brain penalty (max risk = 1%)
-        if (
-            RANDOM.random()
-            < ((len(self.brain._neurons) / MAX_NEURONS) / 100) * MASTER_KILL_FACTOR
-        ):
-            return True
+        # if (
+        #     RANDOM.random()
+        #     < ((len(self.brain._neurons) / MAX_NEURONS) / 100) * MASTER_KILL_FACTOR
+        # ):
+        #     return True
 
         return False
 
@@ -93,7 +101,7 @@ class Organism:
             return False
 
         if self._body.fullness > FERTILE_THRESHOLD:
-            if RANDOM.random() < 0.17:
+            if RANDOM.random() < REPRODUCTION_FACTOR:
                 return True
         return False
 
@@ -125,12 +133,12 @@ class Organism:
 
         # Evolution
 
-        if len(baby_brain._neurons) < MAX_NEURONS:
-            if RANDOM.random() < 0.1:
+        if RANDOM.random() < 0.4 and len(baby_brain._neurons) < MAX_NEURONS:
+            if RANDOM.random() < 0.3 * MASTER_EVOLUTION_RATE:
                 for _ in range(1):
                     baby_brain.add_default_neuron(NeuronType.CONTROL)
         else:
-            if RANDOM.random() < 0.2:
+            if RANDOM.random() < 0.3 * MASTER_EVOLUTION_RATE:
                 for _ in range(1):
                     baby_brain.remove_random_neuron(NeuronType.CONTROL, autoprune=False)
                 baby_brain.prune_disconnected_edges()
@@ -140,11 +148,11 @@ class Organism:
                 RANDOM.random() < 0.4
                 and len(baby_brain._edges) < (len(baby_brain._neurons) ** 2) // 2
             ):
-                if RANDOM.random() < 0.3:
+                if RANDOM.random() < 0.6 * MASTER_EVOLUTION_RATE:
                     for _ in range(max(len(baby_brain._edges) // 20, 1)):
                         baby_brain.add_random_edge()
             else:
-                if RANDOM.random() < 0.5:
+                if RANDOM.random() < 0.6 * MASTER_EVOLUTION_RATE:
                     for _ in range(max(len(baby_brain._edges) // 20, 1)):
                         baby_brain.remove_random_edge()
         # TODO: Add and remove neurons / connections during evolution

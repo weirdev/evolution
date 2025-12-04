@@ -79,19 +79,24 @@ class Brain:
     def add_random_edge(self):
         src = RANDOM.choice(self.input_neuron_ids + self.control_neuron_ids)
         dst = RANDOM.choice(self.control_neuron_ids + self.output_neuron_ids)
-        weight = (RANDOM.random() * 4) - 2
+        weight = (RANDOM.normalvariate() * 4) - 2
 
         self.add_edge(Edge(src, dst, weight))
 
     def remove_random_edge(self):
-        edge_idx = RANDOM.randrange(len(self._edges))
-        self._edges.pop(edge_idx)
+        if len(self._edges) > 0:
+            edge_idx = RANDOM.randrange(len(self._edges))
+            self._edges.pop(edge_idx)
 
     def add_default_neuron(
         self, neuron_type: NeuronType, label: Optional[str] = None
     ) -> int:
-        bias = (RANDOM.random() * 2) - 1
-        reset_factor = RANDOM.random()
+        if neuron_type in (NeuronType.INPUT, NeuronType.OUTPUT):
+            bias = 0.0
+            reset_factor = 0.0
+        else:
+            bias = (RANDOM.normalvariate() * 2) - 1
+            reset_factor = RANDOM.normalvariate()
         neuron_id = max(self._neurons, default=-1) + 1
         self.add_neuron(Neuron(neuron_id, bias, reset_factor), neuron_type, label)
         return neuron_id
